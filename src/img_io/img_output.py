@@ -15,9 +15,9 @@ def output_ppm(filename, img):
 
     for i in range(rows):
         for j in range(cols):
-            r = int(clamp(256.0 * img[i][j].r(), 0.0, 256.0))
-            g = int(clamp(256.0 * img[i][j].g(), 0.0, 256.0))
-            b = int(clamp(256.0 * img[i][j].b(), 0.0, 256.0))
+            r = int(clamp(255.999 * img[i][j].r(), 0.0, 255.999))
+            g = int(clamp(255.999 * img[i][j].g(), 0.0, 255.999))
+            b = int(clamp(255.999 * img[i][j].b(), 0.0, 255.999))
             imgfile.write(f'{r} {g} {b}\n')
 
     imgfile.close()

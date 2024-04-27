@@ -1,3 +1,4 @@
+rm ./output/image.ppm
 python3 ./src/main.py ./output/image.ppm
 
 if [ $? -eq 0 ]; then

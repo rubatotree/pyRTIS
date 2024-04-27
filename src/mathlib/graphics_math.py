@@ -7,3 +7,5 @@ def clamp(x, a, b):
         return b
     return x
 
+def lerp(a, b, m:float):
+    return a * (1 - m) + b * m

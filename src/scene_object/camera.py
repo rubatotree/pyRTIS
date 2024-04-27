@@ -1,5 +1,7 @@
+import sys
 sys.path.append(".")
 from mathlib.graphics_math import *
+from mathlib.ray import *
 
 class Camera:
     vec_up = vec3(0.0, 1.0, 0.0)
@@ -23,8 +25,8 @@ class Camera:
         base_x = cross(base_z, vec_up)
         base_y = cross(base_x, base_z)
 
-    def gen_ray(u:float, v:float):
-        u = (u - 0.5) * width_
-        v = (v - 0.5) * height_
-        return ray(origin, u * base_x + v * base_y + dist * base_z)
+    def gen_ray(self, u:float, v:float):
+        u = (u - 0.5) * self.width
+        v = (v - 0.5) * self.height
+        return ray(self.origin, self.base_x * u + self.base_y * v + self.base_z * self.dist )
 

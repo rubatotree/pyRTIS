@@ -63,7 +63,7 @@ class vec3:
         return self / self.norm()
 
     @staticmethod
-    def zero() -> vec3 :
+    def zero():
         return vec3(0.0, 0.0, 0.0)
 
 def dot(a:vec3, b:vec3):
