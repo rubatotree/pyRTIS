@@ -44,6 +44,26 @@ class vec3:
                         self.e[1] * other,
                         self.e[2] * other)
 
+    def __radd__(self, other):
+        return vec3(self.e[0] + other.e[0], 
+                    self.e[1] + other.e[1],
+                    self.e[2] + other.e[2])
+
+    def __rsub__(self, other):
+        return vec3(self.e[0] - other.e[0], 
+                    self.e[1] - other.e[1],
+                    self.e[2] - other.e[2])
+
+    def __rmul__(self, other):
+        if isinstance(other, vec3):
+            return vec3(self.e[0] * other.e[0], 
+                        self.e[1] * other.e[1],
+                        self.e[2] * other.e[2])
+        elif isinstance(other, float) or isinstance(other, int):
+            return vec3(self.e[0] * other,
+                        self.e[1] * other,
+                        self.e[2] * other)
+
     def __truediv__(self, other):
         if isinstance(other, vec3):
             return vec3(self.e[0] / other.e[0], 
@@ -53,6 +73,13 @@ class vec3:
             return vec3(self.e[0] / other,
                         self.e[1] / other,
                         self.e[2] / other)
+
+    def __neg__(self):
+        return vec3(-self.e[0], -self.e[1], -self.e[2])
+
+    def __pos__(self):
+        return vec3(self.e[0], self.e[1], self.e[2])
+
     def norm_sqr(self):
         return self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
 

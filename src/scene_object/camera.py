@@ -6,7 +6,7 @@ from mathlib.ray import *
 class Camera:
     vec_up = vec3(0.0, 1.0, 0.0)
 
-    origin = vec3(0.0, 0.0, 2.0)
+    origin = vec3(0.0, 1.0, 3.0)
     base_x = vec3(1.0, 0.0, 0.0)
     base_y = vec3(0.0, 1.0, 0.0)
     base_z = vec3(0.0, 0.0, -1.0)
