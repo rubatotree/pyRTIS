@@ -9,16 +9,52 @@ from scene_object.scene_object import *
 class Material:
     # return: (fr, wi, pdf)
     @abstractmethod
-    def sample(self, rec:HitRecord):
+    def sample(self, wo:vec3, rec:HitRecord):
         pass
 
 class Lambertian(Material):
     albedo = vec3(1.0)
-    def __init__(self, albedo):
+    def __init__(self, albedo:vec3):
         self.albedo = albedo
-    def sample(self, rec:HitRecord):
+    def sample(self, wo:vec3, rec:HitRecord):
         direction, pdf = random_sphere_surface_uniform()
         wi = (direction + rec.normal).normalized()
         fr = self.albedo * pdf / dot(rec.normal, wi)
         return (fr, wi, pdf)
+
+class Metal(Material):
+    albedo = vec3(1.0)
+    fuzz = 0.0
+    def __init__(self, albedo:vec3, fuzz = 0.0):
+        self.albedo = albedo
+        self.fuzz = fuzz
+    def sample(self, wo:vec3, rec:HitRecord):
+        direction, pdf = random_sphere_uniform()
+        distort = direction * self.fuzz
+        wi = (reflect(-wo, rec.normal) + distort).normalized()
+        fr = self.albedo * pdf / dot(rec.normal, wi)
+        return (fr, wi, pdf)
+
+class Transparent(Material):
+    ref_idx = 1.5
+    def __init__(self, ref_idx:float):
+        self.ref_idx = ref_idx
+
+    def sample(self, wo:vec3, rec:HitRecord):
+        attenuation = vec3(1.0)
+        etai_over_etat = (1.0 / self.ref_idx) if rec.front_face else self.ref_idx
+        NdotV = min(dot(wo, rec.normal), 1.0)
+        sinTheta = math.sqrt(1.0 - NdotV * NdotV)
+        reflect_prob = schlick(NdotV, etai_over_etat)
+
+        pdf = 1.0
+
+        if etai_over_etat * sinTheta > 1.0 or random_float() < reflect_prob:
+            wi = reflect(-wo, rec.normal)
+            fr = attenuation / dot(rec.normal, wi)
+            return (fr, wi, pdf)
+        else:
+            wi = refract(wo, rec.normal, etai_over_etat)
+            fr = attenuation / dot(rec.normal, wi)
+            return (fr, wi, pdf)
 
