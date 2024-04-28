@@ -2,7 +2,6 @@ cd ./output
 rm -r *
 cd ../
 mkdir ./output/temp
-mkdir ./output/temp/png
 
 python3 ./src/main.py ./output/image.ppm
 
