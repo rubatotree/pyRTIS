@@ -10,10 +10,8 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-# width, height = 400, 225 
-# spp = 128
-width, height = 200, 113
-spp = 16
+width, height = 400, 225 
+spp = 128
 p_russian_roulette = 0.6 
 
 main_scene = scene_one_weekend()

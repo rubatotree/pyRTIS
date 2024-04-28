@@ -3,7 +3,8 @@ rm -r *
 cd ../
 mkdir ./output/temp
 
-python3 ./src/main.py ./output/image.ppm
+# python3 ./src/main.py ./output/image.ppm
+pypy3 ./src/main.py ./output/image.ppm
 
 if [ $? -eq 0 ]; then
 	echo "===RUN SUCCESS==="
