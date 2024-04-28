@@ -4,8 +4,6 @@ from mathlib.graphics_math import *
 from mathlib.ray import *
 
 class Camera:
-    vec_up = vec3(0.0, 1.0, 0.0)
-
     origin = vec3(0.0, 1.0, 3.0)
     base_x = vec3(1.0, 0.0, 0.0)
     base_y = vec3(0.0, 1.0, 0.0)
@@ -21,9 +19,9 @@ class Camera:
         self.origin = origin
 
     def look_at(self, pos:vec3):
-        base_z = (pos - origin).normalized()
-        base_x = cross(base_z, vec_up)
-        base_y = cross(base_x, base_z)
+        self.base_z = (pos - self.origin).normalized()
+        self.base_x = cross(self.base_z, vec3(0.0, 1.0, 0.0))
+        self.base_y = cross(self.base_x, self.base_z)
 
     def gen_ray(self, u:float, v:float):
         u = (u - 0.5) * self.width

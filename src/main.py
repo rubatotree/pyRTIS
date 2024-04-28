@@ -10,14 +10,16 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-width, height = 400, 225
-spp = 128
+# width, height = 400, 225 
+# spp = 128
+width, height = 200, 113
+spp = 16
 p_russian_roulette = 0.6 
 
 main_scene = scene_one_weekend()
-main_camera = Camera()
+
 def ray_color(r, scene):
-    rec = scene.hit(r, 0.0001, math.inf)
+    rec = scene.object_root.hit(r, 0.0001, math.inf)
     direction = r.direction.normalized()
     if rec.success:
         if random_float() > p_russian_roulette:
@@ -29,12 +31,12 @@ def ray_color(r, scene):
         col = li * fr * cosval / pdf
         return col
     else:
-        return lerp(vec3(1.0), vec3(0.4, 0.6, 1.0), 0.5 * (r.direction.y() + 1.0) * 0.8 + 0.2);
+        return scene.skybox.sample(direction)
 
 def calc_pixel(x, y):
     uv = (float(x) / width, float(y) / height)
-    r = main_camera.gen_ray(uv[0], uv[1])
-    return gamma_correction(ray_color(r, main_scene))
+    r = main_scene.main_camera.gen_ray(uv[0], uv[1])
+    return ray_color(r, main_scene)
 
 def main():
     output_filename = "./output/image.ppm"
@@ -52,7 +54,7 @@ def main():
         col_sum.append(row)
         img.append(img_row)
 
-    print(f'Image Size: {width} * {height}')
+    print(f'Image Size: {width} * {height}', flush=True)
 
     start_time = time.time()
     for k in range(spp):
@@ -61,9 +63,13 @@ def main():
             for i in range(width):
                 col = calc_pixel(i + random.random(), height - 1 - j + random.random())
                 col_sum[j][i] += col
-                img[j][i] = col_sum[j][i] / (k + 1)
+                img[j][i] = gamma_correction(col_sum[j][i] / (k + 1))
             time_str = '{:.3f}'.format(time.time() - start_time)
-            print(f'\r\033[KFrame = {k+1}/{spp} \tLine={j+1}/{height} \tTime={time_str}(s)', end='', flush=True)
+            progress = (k * width * height + j * width + i + 1) / (spp * width * height)
+            percent = int(progress * 100)
+            time_tot = '{:.3f}'.format((time.time() - start_time) / progress) 
+
+            print('\r\033[', f'\[{percent}%] Frame = {k+1}/{spp} \tLine={j+1}/{height} \tTime={time_str}(s)/{time_tot}(s) ', end='', flush=True)
         output_ppm(f'./output/temp/{k}.ppm', img)
 
     output_ppm(output_filename, img)
