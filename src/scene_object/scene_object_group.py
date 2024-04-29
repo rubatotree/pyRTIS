@@ -20,3 +20,8 @@ class SceneObjectGroup(SceneObject):
                 current_dist = rec_temp.dist
                 rec_final = rec_temp
         return rec_final
+    def get_objects(self):
+        base_list = []
+        for obj in self.obj_list:
+            base_list.extend(obj.get_objects())
+        return base_list

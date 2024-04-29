@@ -12,6 +12,11 @@ class Scene:
         self.object_root = object_root
         self.main_camera = main_camera
         self.skybox = skybox
+        self.base_list = object_root.get_objects()
+        self.light_list = []
+        for obj in self.base_list:
+            if isinstance(obj, Light):
+                self.light_list.append(obj)
 
 def scene_cornell_box() -> Scene:
     obj_root = SceneObjectGroup()
@@ -45,7 +50,8 @@ def scene_cornell_box() -> Scene:
     obj_root.append(Triangle((v0     , v0 + v3          , v0 + v3 + v2     ), matc))
     obj_root.append(Triangle((v0 + v1, v0 + v3 + v2 + v1, v0 + v2 + v1     ), matc))
     obj_root.append(Triangle((v0 + v1, v0 + v3 + v1     , v0 + v3 + v2 + v1), matc))
-    obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleMetal(vec3(1.0))))
+    obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleMetal(vec3(1.0), 0.5)))
+    # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleTransparent(1.5)))
 
     radiance = vec3(20.0)
     obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))

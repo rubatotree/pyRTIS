@@ -30,4 +30,6 @@ class SceneObject:
     @abstractmethod
     def hit(self, r:ray, t_min:float, t_max:float):
         pass 
+    def get_objects(self):
+        return [self]
 

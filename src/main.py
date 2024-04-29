@@ -13,35 +13,50 @@ from materials.material import *
 output_gif = False 
 use_pillow = False
 
-width, height = 800, 600
-spp = 4096 
+width, height = 400, 300
+spp = 256
 p_russian_roulette = 0.8 
 
 main_scene = scene_cornell_box()
 
-def ray_color(r, scene):
+def ray_color(r, scene, depth):
+    direct_light = vec3(0.0)
+
+    if depth > 0:
+        N = len(scene.light_list)
+        select_light_pdf = 1.0 / N
+        light_id = int(math.floor(N * random_float()))
+        light_emission, wi_light, light_pos, sample_light_pdf = scene.light_list[light_id].sample_light(r.origin)
+        sample_light_rec = scene.object_root.hit(ray(r.origin, wi_light), 0.0001, math.inf)
+        if (sample_light_rec.pos - light_pos).norm() < 0.0001:
+            direct_light = light_emission / (select_light_pdf + sample_light_pdf)
+        if random_float() > p_russian_roulette:
+            return direct_light
+
+    # Global Light 
+    global_light = vec3(0.0)
     rec = scene.object_root.hit(r, 0.0001, math.inf)
     direction = r.direction.normalized()
     if rec.success:
         wo = -direction
+        le = rec.material.emission(wo, rec)
         fr, wi, pdf = rec.material.sample(wo, rec)
+        # fr = rec.material.bsdf(wi, wo, rec)
         cosval = dot(wi, rec.normal)
-
-        if rec.isLight:
-            return fr * cosval / pdf
-
-        if random_float() > p_russian_roulette:
-            return vec3.zero()
-        li = ray_color(ray(rec.pos, wi), scene)
-        col = li * fr * cosval / pdf
-        return col
+        if fr.norm() < 0.0001:
+            global_light = le
+        else:
+            li = ray_color(ray(rec.pos, wi), scene, depth + 1)
+            global_light = le + li * fr * cosval / pdf
     else:
-        return scene.skybox.sample(direction)
+        global_light = scene.skybox.sample(direction)
+
+    return direct_light + global_light
 
 def calc_pixel(x, y):
     uv = (float(x) / width, float(y) / height)
     r = main_scene.main_camera.gen_ray(uv[0], uv[1])
-    return ray_color(r, main_scene)
+    return ray_color(r, main_scene, 0)
 
 def main():
     # output_filename = "./output/image.ppm"
@@ -69,7 +84,10 @@ def main():
             for i in range(width):
                 col = calc_pixel(i + random.random(), height - 1 - j + random.random())
                 col_sum[j][i] += col
-                img[j][i] = gamma_correction(col_sum[j][i] / (k + 1))
+                img_col = col_sum[j][i] / (k + 1)
+                for c in range(3):
+                    img_col.e[c] = clamp(img_col.e[c], 0.0, 1.0)
+                img[j][i] = gamma_correction(img_col)
             time_str = '{:.3f}'.format(time.time() - start_time)
             progress = (k * width * height + j * width + i + 1) / (spp * width * height)
             percent = int(progress * 100)

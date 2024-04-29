@@ -16,6 +16,8 @@ class TriangleLight(Light):
         self.normal = dircross.normalized()
         self.area = abs(dircross.norm()) / 2
         self.material = SimpleLight(self.normal, radiance / self.area)
+        self.radiance = radiance
+        self.irradiance = radiance / self.area
 
     def hit(self, r:ray, t_min:float, t_max:float):
         # zhuanlan.zhihu.com/p/451582864
@@ -40,3 +42,32 @@ class TriangleLight(Light):
             return rec
         else:
             return HitRecord.inf()
+
+    def sample_light(self, pos:vec3):
+        base_x = self.vertices[1] - self.vertices[0]
+        base_y = self.vertices[2] - self.vertices[0]
+        normal = cross(base_x, base_y).normalized()
+
+        success = True
+        if dot(normal, self.vertices[0] - pos) < 0:
+           success = False 
+
+        x = random_float()
+        y = random_float()
+        if x + y > 1:
+            x = 1 - x
+            y = 1 - y
+        sampled_light_pos = self.vertices[0] + base_x * x + base_y * y
+        direction = (sampled_light_pos - pos).normalized()
+        dist = (sampled_light_pos - pos).norm()
+        cosval = dot(direction, -normal)
+        sample_light_pdf = 1 / self.area / cosval * dist * dist
+        if isinstance(sample_light_pdf, complex):
+            print("Error: Complex! =", sample_light_pdf)
+            exit()
+        emission = vec3(0.0)
+        if success:
+            emission = self.irradiance / math.pi
+        return (emission, direction, sampled_light_pos, sample_light_pdf)
+            
+        
