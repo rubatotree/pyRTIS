@@ -14,42 +14,43 @@ output_gif = True
 use_pillow = False
 
 width, height = 800, 600
-spp = 128
+spp = 8
 p_russian_roulette = 0.8 
 
 main_scene = scene_cornell_box()
 
 def ray_color(r, scene, depth):
     direct_light = vec3(0.0)
+    global_light = vec3(0.0)
 
-    if depth > 0:
+    rec = scene.object_root.hit(r, 0.0001, math.inf)
+    direction = r.direction.normalized()
+    wo = -direction
+
+    if not rec.success:
+        return scene.skybox.sample(direction)
+
+    if not rec.isLight:
         N = len(scene.light_list)
         select_light_pdf = 1.0 / N
         light_id = int(math.floor(N * random_float()))
-        light_emission, wi_light, light_pos, sample_light_pdf = scene.light_list[light_id].sample_light(r.origin)
-        sample_light_rec = scene.object_root.hit(ray(r.origin, wi_light), 0.0001, math.inf)
-        if (sample_light_rec.pos - light_pos).norm() < 0.0001:
-            direct_light = light_emission / (select_light_pdf + sample_light_pdf)
-        if random_float() > p_russian_roulette:
-            return direct_light
+        light_emission, wi_light, light_pos, sample_light_pdf = scene.light_list[light_id].sample_light(rec.pos)
+        sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
+        if dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
+            direct_light = light_emission * rec.material.bsdf(wi_light, wo, rec) * dot(wi_light, rec.normal) / (select_light_pdf * sample_light_pdf)
 
-    # Global Light 
-    global_light = vec3(0.0)
-    rec = scene.object_root.hit(r, 0.0001, math.inf)
-    direction = r.direction.normalized()
-    if rec.success:
-        wo = -direction
-        le = rec.material.emission(wo, rec)
-        fr, wi, pdf = rec.material.sample(wo, rec)
-        fr = rec.material.bsdf(wi, wo, rec)
-        cosval = dot(wi, rec.normal)
-        if fr.norm() < 0.000001:
-            global_light = le
-        else:
-            li = ray_color(ray(rec.pos, wi), scene, depth + 1)
-            global_light = le + li * fr * cosval / pdf
+    if random_float() > p_russian_roulette:
+        return direct_light
+
+    le = rec.material.emission(wo, rec)
+    fr, wi, pdf = rec.material.sample(wo, rec)
+    fr = rec.material.bsdf(wi, wo, rec)
+    cosval = dot(wi, rec.normal)
+    if fr.norm() < 0.000001:
+        global_light = le
     else:
-        global_light = scene.skybox.sample(direction)
+        li = ray_color(ray(rec.pos, wi), scene, depth + 1)
+        global_light = le + li * fr * cosval / pdf
 
     return direct_light + global_light
 
@@ -85,6 +86,8 @@ def main():
                 col = calc_pixel(i + random.random(), height - 1 - j + random.random())
                 col_sum[j][i] += col
                 img_col = col_sum[j][i] / (k + 1)
+                if img_col.r() < 0 or img_col.g() < 0 or img_col.b() < 0:
+                    print("Error: ", img_col)
                 for c in range(3):
                     img_col.e[c] = clamp(img_col.e[c], 0.0, 1.0)
                 img[j][i] = gamma_correction(img_col)

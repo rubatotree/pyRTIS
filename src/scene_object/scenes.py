@@ -50,9 +50,9 @@ def scene_cornell_box() -> Scene:
     obj_root.append(Triangle((v0     , v0 + v3          , v0 + v3 + v2     ), matc))
     obj_root.append(Triangle((v0 + v1, v0 + v3 + v2 + v1, v0 + v2 + v1     ), matc))
     obj_root.append(Triangle((v0 + v1, v0 + v3 + v1     , v0 + v3 + v2 + v1), matc))
-    # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleMetal(vec3(1.0), 0.5)))
-    # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleTransparent(1.5)))
-    obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
+    obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleMetal(vec3(1.0), 0.5)))
+    obj_root.append(Sphere(vec3(0.1, -0.8, 0.7), 0.2, SimpleTransparent(1.5)))
+    # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
 
     radiance = vec3(20.0)
     obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))

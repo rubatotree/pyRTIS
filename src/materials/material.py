@@ -74,15 +74,15 @@ class SimpleTransparent(Material):
             wi = refract(wo, rec.normal, etai_over_etat)
             fr = attenuation / dot(rec.normal, wi)
             return (fr, wi, pdf)
-    def brdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+
+    def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         attenuation = vec3(1.0)
         etai_over_etat = (1.0 / self.ref_idx) if rec.front_face else self.ref_idx
         fr = attenuation / dot(rec.normal, wi)
-        if etai_over_etat * sinTheta > 1.0:
-            return fr
-
         NdotV = min(dot(wo, rec.normal), 1.0)
         sinTheta = math.sqrt(1.0 - NdotV * NdotV)
+        if etai_over_etat * sinTheta > 1.0:
+            return fr
         reflect_prob = schlick(NdotV, etai_over_etat)
         wi_reflect = reflect(wo, rec.normal)
         wi_refract = refract(wo, rec.normal, etai_over_etat)
@@ -113,8 +113,6 @@ class SimpleLight(Material):
         pdf = 1.0 / 4 / math.pi
         return self.back_albedo * pdf / dot(rec.normal, wi)
     def emission(self, wo:vec3, rec:HitRecord):
-        direction, pdf = random_hemisphere_surface_uniform(self.normal)
-        wi = direction
         if dot(self.normal, wo) > 0:
             le = self.irradiance / math.pi
         else:
