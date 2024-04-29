@@ -10,9 +10,14 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-width, height = 400, 225 
-spp = 128
-p_russian_roulette = 0.6 
+output_gif = True
+use_pillow = True
+
+# width, height = 1920, 1080 
+# spp = 1440
+width, height = 400, 225
+spp = 8
+p_russian_roulette = 0.8 
 
 main_scene = scene_one_weekend()
 
@@ -37,7 +42,8 @@ def calc_pixel(x, y):
     return ray_color(r, main_scene)
 
 def main():
-    output_filename = "./output/image.ppm"
+    # output_filename = "./output/image.ppm"
+    output_filename = "image"
     if len(sys.argv) > 1:
         output_filename = sys.argv[1]
 
@@ -68,9 +74,16 @@ def main():
             time_tot = '{:.3f}'.format((time.time() - start_time) / progress) 
 
             print('\r\033[', f'\[{percent}%] Frame = {k+1}/{spp} \tLine={j+1}/{height} \tTime={time_str}(s)/{time_tot}(s) ', end='', flush=True)
-        output_ppm(f'./output/temp/{k}.ppm', img)
+        if output_gif:
+            if use_pillow:
+                output_img(f'./output/{output_filename}/temp/{k}.jpg', img)
+            else:
+                output_ppm(f'./output/{output_filename}/temp/{k}.ppm', img)
 
-    output_ppm(output_filename, img)
+    if use_pillow:
+        output_img(f'./output/{output_filename}/{output_filename}.bmp', img)
+    else:
+        output_img(f'./output/{output_filename}/{output_filename}.ppm', img)
 
     print(f'\nRayTracing Finish\n')
 

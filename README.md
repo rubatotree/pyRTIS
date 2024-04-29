@@ -8,9 +8,9 @@
 
 部分代码的实现有参考中国科学技术大学 2024 年春季课程《计算机图形学》的框架（[USTC-CG/USTC_CG_24: Homework repo for the course "Computer Graphics" in the 2024 spring @USTC (github.com)](https://github.com/USTC-CG/USTC_CG_24)）。
 
-必需依赖：暂无
+必需依赖：pillow 7.2, numpy, libjpeg, zlib, libtiff, libfreetype, littlecms, libwebp, tcl, openjpeg
 
-可选依赖：FFmpeg（用于将 ppm 格式的图像转换为其他格式，包括采样数增加过程的 gif 图）。
+可选依赖：PyPy 3.8, FFmpeg（用于将 ppm 格式的图像转换为其他格式，包括采样数增加过程的 gif 图）。
 
 ## TODO List
 
