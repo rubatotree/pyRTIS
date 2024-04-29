@@ -10,11 +10,11 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-output_gif = False 
+output_gif = True 
 use_pillow = False
 
-width, height = 400, 300
-spp = 256
+width, height = 800, 600
+spp = 128
 p_russian_roulette = 0.8 
 
 main_scene = scene_cornell_box()
@@ -41,9 +41,9 @@ def ray_color(r, scene, depth):
         wo = -direction
         le = rec.material.emission(wo, rec)
         fr, wi, pdf = rec.material.sample(wo, rec)
-        # fr = rec.material.bsdf(wi, wo, rec)
+        fr = rec.material.bsdf(wi, wo, rec)
         cosval = dot(wi, rec.normal)
-        if fr.norm() < 0.0001:
+        if fr.norm() < 0.000001:
             global_light = le
         else:
             li = ray_color(ray(rec.pos, wi), scene, depth + 1)

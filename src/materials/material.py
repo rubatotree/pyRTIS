@@ -96,14 +96,27 @@ class SimpleTransparent(Material):
 class SimpleLight(Material):
     irradiance = vec3(1.0)
     normal = vec3(0.0)
+    back_albedo = vec3(0.0)
     def __init__(self, normal:vec3, irradiance:vec3):
         self.normal = normal
         self.irradiance = irradiance
+    def sample(self, wo:vec3, rec:HitRecord):
+        if dot(self.normal, wo) > 0:
+            return (vec3.zero(), vec3.zero(), 1.0)
+        direction, pdf = random_sphere_surface_uniform()
+        wi = (direction + rec.normal).normalized()
+        fr = self.back_albedo * pdf / dot(rec.normal, wi)
+        return (fr, wi, pdf)
+    def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+        if dot(self.normal, wo) > 0:
+            return vec3(0.0)
+        pdf = 1.0 / 4 / math.pi
+        return self.back_albedo * pdf / dot(rec.normal, wi)
     def emission(self, wo:vec3, rec:HitRecord):
         direction, pdf = random_hemisphere_surface_uniform(self.normal)
         wi = direction
         if dot(self.normal, wo) > 0:
-            le = self.irradiance / pdf / math.pi
+            le = self.irradiance / math.pi
         else:
             le = vec3.zero()
         return le
