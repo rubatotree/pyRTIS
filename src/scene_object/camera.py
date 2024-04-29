@@ -9,8 +9,8 @@ class Camera:
     base_y = vec3(0.0, 1.0, 0.0)
     base_z = vec3(0.0, 0.0, -1.0)
     width = 4.0
-    height = 2.25
-    dist = 2.0
+    height = 3.0
+    dist = 4.0
 
     def __init__(self):
         pass

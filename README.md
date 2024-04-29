@@ -18,8 +18,8 @@
 
 ### Part 2 - 将“玩具光追”改写为一个严谨的路径追踪器
 
-- [ ] 添加三角片的 Primitive Scene Object
-- [ ] 搭建 Cornell Box 模型
+- [x] 添加三角片的 Primitive Scene Object
+- [x] 搭建 Cornell Box 模型
 - [ ] 搭建 MIS 模型
 - [ ] 添加球形光源与矩形光源
 - [ ] 对光源直接采样，完善路径追踪积分

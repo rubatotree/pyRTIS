@@ -47,6 +47,7 @@ def random_hemisphere_surface_uniform(normal):
     vec, pdf = random_sphere_surface_uniform()
     if dot(vec, normal) < 0:
         vec = -vec
+    pdf *= 2
     return (vec, pdf)
 
 def gamma_correction(col:vec3) -> vec3 :

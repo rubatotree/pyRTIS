@@ -10,16 +10,16 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-output_gif = True
-use_pillow = True
+output_gif = True 
+use_pillow = False
 
-# width, height = 1920, 1080 
-# spp = 1440
-width, height = 400, 225
-spp = 8
+# width, height = 1200, 900
+# spp = 1024
+width, height = 800, 600
+spp = 512
 p_russian_roulette = 0.8 
 
-main_scene = scene_one_weekend()
+main_scene = scene_cornell_box()
 
 def ray_color(r, scene):
     rec = scene.object_root.hit(r, 0.0001, math.inf)

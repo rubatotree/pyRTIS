@@ -12,7 +12,7 @@ class Material:
     def sample(self, wo:vec3, rec:HitRecord):
         pass
 
-class Lambertian(Material):
+class SimpleLambertian(Material):
     albedo = vec3(1.0)
     def __init__(self, albedo:vec3):
         self.albedo = albedo
@@ -22,7 +22,7 @@ class Lambertian(Material):
         fr = self.albedo * pdf / dot(rec.normal, wi)
         return (fr, wi, pdf)
 
-class Metal(Material):
+class SimpleMetal(Material):
     albedo = vec3(1.0)
     fuzz = 0.0
     def __init__(self, albedo:vec3, fuzz = 0.0):
@@ -58,3 +58,17 @@ class Transparent(Material):
             fr = attenuation / dot(rec.normal, wi)
             return (fr, wi, pdf)
 
+class SimpleLight(Material):
+    irradiance = vec3(1.0)
+    normal = vec3(0.0)
+    def __init__(self, normal:vec3, irradiance:vec3):
+        self.normal = normal
+        self.irradiance = irradiance
+    def sample(self, wo:vec3, rec:HitRecord):
+        direction, pdf = random_hemisphere_surface_uniform(self.normal)
+        wi = direction
+        if dot(self.normal, wo) > 0:
+            fr = self.irradiance * pdf
+        else:
+            fr = vec3.zero()
+        return (fr, wi, pdf)

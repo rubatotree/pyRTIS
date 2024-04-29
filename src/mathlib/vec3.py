@@ -22,7 +22,7 @@ class vec3:
         return self.e[2]
 
     def __str__(self):
-        return f'{e[0]}, {e[1]}, {e[2]}'
+        return f'{self.e[0]}, {self.e[1]}, {self.e[2]}'
 
     def __add__(self, other):
         return vec3(self.e[0] + other.e[0], 
@@ -97,7 +97,7 @@ def dot(a:vec3, b:vec3):
     return a.e[0] * b.e[0] + a.e[1] * b.e[1] + a.e[2] * b.e[2]
 
 def cross(a:vec3, b:vec3):
-    return vec3(a.e[1] * a.e[2] - a.e[2] * b.e[1],
-                a.e[2] * a.e[0] - a.e[0] * b.e[2],
-                a.e[0] * a.e[1] - a.e[1] * b.e[0])
+    return vec3(a.e[1] * b.e[2] - a.e[2] * b.e[1],
+                a.e[2] * b.e[0] - a.e[0] * b.e[2],
+                a.e[0] * b.e[1] - a.e[1] * b.e[0])
 
