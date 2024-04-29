@@ -10,13 +10,11 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-output_gif = True 
+output_gif = False 
 use_pillow = False
 
-# width, height = 1200, 900
-# spp = 1024
 width, height = 800, 600
-spp = 512
+spp = 4096 
 p_russian_roulette = 0.8 
 
 main_scene = scene_cornell_box()
@@ -25,12 +23,16 @@ def ray_color(r, scene):
     rec = scene.object_root.hit(r, 0.0001, math.inf)
     direction = r.direction.normalized()
     if rec.success:
-        if random_float() > p_russian_roulette:
-            return vec3.zero()
         wo = -direction
         fr, wi, pdf = rec.material.sample(wo, rec)
-        li = ray_color(ray(rec.pos, wi), scene)
         cosval = dot(wi, rec.normal)
+
+        if rec.isLight:
+            return fr * cosval / pdf
+
+        if random_float() > p_russian_roulette:
+            return vec3.zero()
+        li = ray_color(ray(rec.pos, wi), scene)
         col = li * fr * cosval / pdf
         return col
     else:

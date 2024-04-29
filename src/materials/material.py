@@ -58,6 +58,7 @@ class Transparent(Material):
             fr = attenuation / dot(rec.normal, wi)
             return (fr, wi, pdf)
 
+# Temporal "Light material"
 class SimpleLight(Material):
     irradiance = vec3(1.0)
     normal = vec3(0.0)

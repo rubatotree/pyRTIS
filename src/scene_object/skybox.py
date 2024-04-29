@@ -16,3 +16,7 @@ class SkyBox_ColorFill(SkyBox):
 class SkyBox_OneWeekend(SkyBox):
     def sample(self, direction:vec3) -> vec3:
         return lerp(vec3(1.0), vec3(0.4, 0.6, 1.0), 0.5 * (direction.y() + 1.0) * 0.8 + 0.2)
+
+class SkyBox_NeonNight(SkyBox):
+    def sample(self, direction:vec3) -> vec3:
+        return lerp(vec3(0.8, 0.0, 0.32), vec3(0.05, 0.0, 0.1), (direction.y() * 0.5 + 0.5) ** 0.5)

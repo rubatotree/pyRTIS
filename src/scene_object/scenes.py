@@ -53,7 +53,7 @@ def scene_cornell_box() -> Scene:
     main_camera = Camera()
     main_camera.set_pos(vec3(0.0, 0.0, 4.0))
     main_camera.look_at(vec3(0.0, 0.0, 0.0))
-    return Scene(obj_root, main_camera, SkyBox_OneWeekend())
+    return Scene(obj_root, main_camera, SkyBox_NeonNight())
 
 def scene_one_weekend() -> Scene:
     obj_root = SceneObjectGroup()

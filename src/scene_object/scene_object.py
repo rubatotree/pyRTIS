@@ -12,6 +12,7 @@ class HitRecord:
     dist = math.inf
     front_face = False
     material = None
+    isLight = False
     def __init__(self, pos=vec3.zero(), normal=vec3.zero(), dist=math.inf, front_face=False, material=None, success=True):
         self.pos = pos
         self.normal = normal
