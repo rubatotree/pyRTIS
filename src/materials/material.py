@@ -21,12 +21,12 @@ class SimpleLambertian(Material):
         self.albedo = albedo
     def sample(self, wo:vec3, rec:HitRecord):
         direction, pdf = random_sphere_surface_uniform()
-        wi = (direction + rec.normal).normalized()
-        fr = self.albedo * pdf / dot(rec.normal, wi)
+        wi = (direction + rec.normal).safe_normalized()
+        fr = self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         pdf = 1.0 / 4 / math.pi
-        return self.albedo * pdf / dot(rec.normal, wi)
+        return self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
 
 class SimpleMetal(Material):
     albedo = vec3(1.0)
@@ -37,15 +37,15 @@ class SimpleMetal(Material):
     def sample(self, wo:vec3, rec:HitRecord):
         direction, pdf = random_sphere_uniform()
         distort = direction * self.fuzz
-        wi = (reflect(-wo, rec.normal) + distort).normalized()
-        fr = self.albedo * pdf / dot(rec.normal, wi)
+        wi = (reflect(-wo, rec.normal) + distort).safe_normalized()
+        fr = self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         wo_ref = reflect(-wo, rec.normal)
         if self.fuzz == 0:
             if dot(wo_ref, wi) > 0.99999:
                 pdf = 1.0 / 4 / math.pi * 3
-                return self.albedo * pdf / dot(rec.normal, wi)
+                return self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
             else:
                 return vec3.zero()
 
@@ -53,7 +53,7 @@ class SimpleMetal(Material):
         pdf = 0
         if d >= 0 and d <= 1:
             pdf = 3 * d * d * 1.0 / 4 / math.pi * 3
-        return self.albedo * pdf / dot(rec.normal, wi)
+        return self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
 
 class SimpleTransparent(Material):
     ref_idx = 1.5
@@ -68,11 +68,11 @@ class SimpleTransparent(Material):
         pdf = 1.0
         if etai_over_etat * sinTheta > 1.0 or random_float() < reflect_prob:
             wi = reflect(-wo, rec.normal)
-            fr = attenuation / dot(rec.normal, wi)
+            fr = attenuation / (dot(rec.normal, wi) + 0.0001)
             return (fr, wi, pdf)
         else:
             wi = refract(wo, rec.normal, etai_over_etat)
-            fr = attenuation / dot(rec.normal, wi)
+            fr = attenuation / (dot(rec.normal, wi) + 0.0001)
             return (fr, wi, pdf)
 
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
@@ -104,14 +104,14 @@ class SimpleLight(Material):
         if dot(self.normal, wo) > 0:
             return (vec3.zero(), vec3.zero(), 1.0)
         direction, pdf = random_sphere_surface_uniform()
-        wi = (direction + rec.normal).normalized()
-        fr = self.back_albedo * pdf / dot(rec.normal, wi)
+        wi = (direction + rec.normal).safe_normalized()
+        fr = self.back_albedo * pdf / (dot(rec.normal, wi) + 0.0001)
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         if dot(self.normal, wo) > 0:
             return vec3(0.0)
         pdf = 1.0 / 4 / math.pi
-        return self.back_albedo * pdf / dot(rec.normal, wi)
+        return self.back_albedo * pdf / (dot(rec.normal, wi) + 0.0001)
     def emission(self, wo:vec3, rec:HitRecord):
         if dot(self.normal, wo) > 0:
             le = self.irradiance / math.pi

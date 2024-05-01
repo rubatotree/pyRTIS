@@ -89,6 +89,11 @@ class vec3:
     def normalized(self):
         return self / self.norm()
 
+    def safe_normalized(self):
+        if self.norm() < 0.0001:
+            return vec3(0.0, 0.0, 0.0)
+        return self / self.norm()
+
     @staticmethod
     def zero():
         return vec3(0.0, 0.0, 0.0)
