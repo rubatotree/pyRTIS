@@ -13,12 +13,12 @@ from scene_object.camera import *
 from materials.material import *
 from core.path_integrator import *
 
-output_gif = False 
+output_gif = True 
 use_pillow = False
 compress_output = True
 
 width, height = 800, 600
-spp = 8
+spp = 32
 thread_num = 32
 backup_num = 100
 
@@ -77,17 +77,21 @@ def main():
             if split == split_num - 1:
                 split_end = height
 
-            threads = []
-            for i in range(thread_num):
-                start = split_start + thread_line_num * i
-                end =   split_start + thread_line_num * (i + 1)
-                if i == thread_num - 1:
-                    end = split_end
-                threads.append(Thread(target=render_lines, args=(start, end)))
-            for i in range(thread_num):
-                threads[i].start()
-            for i in range(thread_num):
-                threads[i].join()
+            if thread_num > 1:
+                threads = []
+                for i in range(thread_num):
+                    start = split_start + thread_line_num * i
+                    end =   split_start + thread_line_num * (i + 1)
+                    if i == thread_num - 1:
+                        end = split_end
+                    threads.append(Thread(target=render_lines, args=(start, end)))
+                for i in range(thread_num):
+                    threads[i].start()
+                for i in range(thread_num):
+                    threads[i].join()
+            else:
+                render_lines(split_start, split_end)
+
             time_str = '{:.3f}'.format(time.time() - start_time)
             progress = (k * width * height + split_end * width) / (spp * width * height)
             percent = int(progress * 100)
