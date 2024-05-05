@@ -50,6 +50,20 @@ def random_hemisphere_surface_uniform(normal):
     pdf *= 2
     return (vec, pdf)
 
+def random_hemisphere_surface_cosine(normal=vec3(0,1,0)):
+    phi = random_float() * math.pi * 2
+    r_sq = random_float()
+    r = math.sqrt(r_sq)
+    h = math.sqrt(1 - r_sq)
+    vec_base = vec3(math.cos(phi) * r, math.sin(phi) * r, h)
+    base_x = cross(normal, vec3(0.0, 1.0, 0.0)).safe_normalized()
+    if base_x.norm() < 0.001:
+        base_x = cross(normal, vec3(1.0, 0.0, 0.0)).safe_normalized()
+    base_y = cross(base_x, normal)
+    vec = vec_base.x() * base_x + vec_base.y() * base_y + vec_base.z() * normal
+    pdf = h / math.pi
+    return (vec, pdf)
+
 def gamma_correction(col:vec3) -> vec3 :
     gamma = 1.0 / 2.2
     return vec3(col.e[0] ** gamma, col.e[1] ** gamma, col.e[2] ** gamma)

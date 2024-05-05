@@ -10,14 +10,15 @@ from scene_object.primitives import *
 from scene_object.camera import *
 from materials.material import *
 
-output_gif = False 
+output_gif = True 
 use_pillow = False
 
-width, height = 400, 300
-spp = 64
+width, height = 800, 600
+spp = 8
 p_russian_roulette = 0.8 
 
-main_scene = scene_cornell_box()
+# main_scene = scene_cornell_box()
+main_scene = scene_mis()
 
 def ray_color(r, scene, depth):
     direct_light = vec3(0.0)
@@ -30,14 +31,23 @@ def ray_color(r, scene, depth):
     if not rec.success:
         return scene.skybox.sample(direction)
 
-    if not rec.isLight:
-        N = len(scene.light_list)
-        select_light_pdf = 1.0 / N
-        light_id = int(math.floor(N * random_float()))
-        light_emission, wi_light, light_pos, sample_light_pdf = scene.light_list[light_id].sample_light(rec.pos)
-        sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-        if dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
-            direct_light = light_emission * rec.material.bsdf(wi_light, wo, rec) * dot(wi_light, rec.normal) / (select_light_pdf * sample_light_pdf)
+    if rec.isLight:
+        if depth == 0:
+            return rec.material.emission(wo, rec)
+        else:
+            return vec3(0.0)
+
+    N = len(scene.light_list)
+    select_light_pdf = 1.0 / N
+    light_id = int(math.floor(N * random_float()))
+    light_emission, wi_light, light_pos, sample_light_pdf = scene.light_list[light_id].sample_light(rec.pos)
+    sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
+    if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
+        fr = rec.material.bsdf(wi_light, wo, rec)
+        cosval = dot(wi_light, rec.normal)
+        direct_light = light_emission * fr * cosval / (select_light_pdf * sample_light_pdf)
+
+    return direct_light
 
     if random_float() > p_russian_roulette:
         return direct_light
@@ -46,11 +56,14 @@ def ray_color(r, scene, depth):
     fr, wi, pdf = rec.material.sample(wo, rec)
     fr = rec.material.bsdf(wi, wo, rec)
     cosval = dot(wi, rec.normal)
+        
     if fr.norm() < 0.000001 or wi.norm() < 0.00001:
         global_light = le
     else:
         li = ray_color(ray(rec.pos, wi), scene, depth + 1)
         global_light = le + li * fr * cosval / pdf
+
+    direct_light = vec3(0.0)
 
     return direct_light + global_light
 

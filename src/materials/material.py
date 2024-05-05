@@ -20,13 +20,15 @@ class SimpleLambertian(Material):
     def __init__(self, albedo:vec3):
         self.albedo = albedo
     def sample(self, wo:vec3, rec:HitRecord):
-        direction, pdf = random_sphere_surface_uniform()
-        wi = (direction + rec.normal).safe_normalized()
-        fr = self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
+        # direction, pdf = random_sphere_surface_uniform()
+        # wi = (direction + rec.normal).safe_normalized()
+        # fr = self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
+        direction, pdf = random_hemisphere_surface_cosine(rec.normal)
+        wi = direction
+        fr = self.albedo / math.pi
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
-        pdf = 1.0 / 4 / math.pi
-        return self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
+        return self.albedo / math.pi
 
 class SimpleMetal(Material):
     albedo = vec3(1.0)
@@ -93,7 +95,7 @@ class SimpleTransparent(Material):
         return vec3.zero()
 
 # Temporal "Light material"
-class SimpleLight(Material):
+class SimpleDirectionalLight(Material):
     irradiance = vec3(1.0)
     normal = vec3(0.0)
     back_albedo = vec3(0.0)
@@ -117,4 +119,16 @@ class SimpleLight(Material):
             le = self.irradiance / math.pi
         else:
             le = vec3.zero()
+        return le
+
+class SimpleLight(Material):
+    irradiance = vec3(1.0)
+    def __init__(self, irradiance:vec3):
+        self.irradiance = irradiance
+    def sample(self, wo:vec3, rec:HitRecord):
+        return (vec3.zero(), vec3.zero(), 1.0)
+    def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+        return vec3(0.0)
+    def emission(self, wo:vec3, rec:HitRecord):
+        le = self.irradiance / math.pi
         return le
