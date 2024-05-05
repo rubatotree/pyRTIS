@@ -13,7 +13,7 @@ class Scene:
         self.main_camera = main_camera
         self.skybox = skybox
         self.base_list = object_root.get_objects()
-        self.light_list = []
+        self.light_list = LightList()
         for obj in self.base_list:
             if isinstance(obj, Light):
                 self.light_list.append(obj)
@@ -50,36 +50,45 @@ def scene_cornell_box() -> Scene:
     obj_root.append(Triangle((v0     , v0 + v3          , v0 + v3 + v2     ), matc))
     obj_root.append(Triangle((v0 + v1, v0 + v3 + v2 + v1, v0 + v2 + v1     ), matc))
     obj_root.append(Triangle((v0 + v1, v0 + v3 + v1     , v0 + v3 + v2 + v1), matc))
-    obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, SimpleMetal(vec3(1.0))))
+    obj_root.append(Sphere(vec3(0.45, -0.7, -0.1), 0.3, SimpleMetal(vec3(1.0, 0.6, 0.8))))
     # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
     # obj_root.append(Sphere(vec3(0.1, -0.8, 0.7), 0.2, SimpleTransparent(1.5)))
 
-    radiance = vec3(100.0)
-    # obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))
-    # obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, -0.25), vec3( 0.25,  0.95,  0.25)), radiance))
-    obj_root.append(SphereLight(vec3(0.0, 0.5, 0.0), 0.1, radiance))
+    obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.0)))
+    obj_root.append(Sphere(vec3(-0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.2)))
+    obj_root.append(Sphere(vec3( 0.0, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.4)))
+    obj_root.append(Sphere(vec3( 0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.7)))
+    obj_root.append(Sphere(vec3( 0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 1.0)))
+
+    radiance = vec3(5.0)
+    obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))
+    obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, -0.25), vec3( 0.25,  0.95,  0.25)), radiance))
+    # obj_root.append(SphereLight(vec3(0.0, 0.5, 0.0), 0.1, radiance))
     main_camera = Camera()
     main_camera.set_pos(vec3(0.0, 0.0, 4.0))
     main_camera.look_at(vec3(0.0, 0.0, 0.0))
     skybox = SkyBox_NeonNight()
-    skybox = SkyBox_ColorFill(vec3(0.5))
     return Scene(obj_root, main_camera, skybox)
 
 def scene_mis() -> Scene:
     obj_root = SceneObjectGroup()
-    theta_range = math.pi / 2
+    theta_range = math.pi * 0.4
     theta_min = -math.pi / 2 - theta_range / 7 / 2
     theta_max = theta_min + theta_range
     radius = 1.0
     width = 2.0
+    fuzz_list = [1, 0.5, 0.1, 0.0]
     for i in range(4):
-        fuzz = lerp(0.0, 1.0, (3 - i) / 3)
+        fuzz = fuzz_list[i]
         theta_min_i = theta_min + theta_range / 7 * 2 * i
         theta_max_i = theta_min + theta_range / 7 * (2 * i + 1.75)
         z1 = -math.cos(theta_min_i) * radius
         z2 = -math.cos(theta_max_i) * radius
         y1 = math.sin(theta_min_i) * radius
         y2 = math.sin(theta_max_i) * radius
+        if i == 3:
+            y2 += (y2 - y1) * 2
+            z2 += (z2 - z1) * 2
         x1 = -width / 2
         x2 = width / 2
         p1 = vec3(x1, y1, z1)
@@ -90,15 +99,17 @@ def scene_mis() -> Scene:
         obj_root.append(Triangle((p1, p2, p3), mat))
         obj_root.append(Triangle((p3, p2, p4), mat))
 
-    obj_root.append(SphereLight(vec3(-width / 2 + 1 * width / 5, 0.0, 0.0), 0.05, 20 * vec3(1.0, 0.6, 0.8)))
-    obj_root.append(SphereLight(vec3(-width / 2 + 2 * width / 5, 0.0, 0.0), 0.05, 20 * vec3(0.6, 1.0, 0.6)))
-    obj_root.append(SphereLight(vec3(-width / 2 + 3 * width / 5, 0.0, 0.0), 0.05, 20 * vec3(1.0, 1.0, 0.6)))
-    obj_root.append(SphereLight(vec3(-width / 2 + 4 * width / 5, 0.0, 0.0), 0.05, 20 * vec3(0.6, 0.8, 1.0)))
+    l_width = width * 1.3
+
+    obj_root.append(SphereLight(vec3(-l_width / 2 + 1 * l_width / 5, 0.3, -0.5), 0.01, 5 * vec3(1.0, 0.6, 0.8), True))
+    obj_root.append(SphereLight(vec3(-l_width / 2 + 2 * l_width / 5, 0.3, -0.5), 0.02, 5 * vec3(0.6, 1.0, 0.6), True))
+    obj_root.append(SphereLight(vec3(-l_width / 2 + 3 * l_width / 5, 0.3, -0.5), 0.04, 5 * vec3(1.0, 1.0, 0.6), True))
+    obj_root.append(SphereLight(vec3(-l_width / 2 + 4 * l_width / 5, 0.3, -0.5), 0.15, 5 * vec3(0.6, 0.8, 1.0), True))
 
     main_camera = Camera()
-    main_camera.set_pos(vec3(0.0, -0.0, 2.0))
-    main_camera.look_at(vec3(0.0, -0.2, 0.0))
-    skybox = SkyBox_ColorFill(vec3(0.5))
+    main_camera.set_pos(vec3(0.0, 0.1, 2.0))
+    main_camera.look_at(vec3(0.0, -0.5, -0.7))
+    skybox = SkyBox_ColorFill(vec3(0.2))
     return Scene(obj_root, main_camera, skybox)
 
 def scene_one_weekend() -> Scene:

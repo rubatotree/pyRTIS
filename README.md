@@ -8,9 +8,17 @@
 
 部分代码的实现有参考中国科学技术大学 2024 年春季课程《计算机图形学》的框架（[USTC-CG/USTC_CG_24: Homework repo for the course "Computer Graphics" in the 2024 spring @USTC (github.com)](https://github.com/USTC-CG/USTC_CG_24)）。
 
-必需依赖：pillow 7.2, numpy, libjpeg, zlib, libtiff, libfreetype, littlecms, libwebp, tcl, openjpeg
+本项目得到了中国科学技术大学 Vlab 实验平台的帮助与支持。本项目超过一半的代码在 Vlab 提供的在线虚拟机中编写，并在虚拟机中进行了大量的光追运算，得到了高品质的 baseline 图像。
 
-可选依赖：PyPy 3.8, FFmpeg（用于将 ppm 格式的图像转换为其他格式，包括采样数增加过程的 gif 图）。
+必需依赖：
+
+- matplotlib：输出各种数学图像
+
+可选依赖：
+
+- PyPy 3.8：加速 Python 脚本的运行
+- FFmpeg：用于将 ppm 格式的图像转换为其他格式，包括采样数增加过程的 gif 图。
+- pillow 7.2（及其附带的 numpy, libjpeg, zlib, libtiff, libfreetype, littlecms, libwebp, tcl, openjpeg）：便于输出 jpeg 格式的文件，防止输出 GIF 时大分辨率、大 spp 的格式造成的存储容量过大问题。
 
 ## TODO List
 
@@ -20,8 +28,8 @@
 
 - [x] 添加三角片的 Primitive Scene Object
 - [x] 搭建 Cornell Box 模型
-- [ ] 搭建 MIS 模型
-- [ ] 添加球形光源与矩形光源
+- [x] 搭建 MIS 模型
+- [x] 添加球形光源与矩形光源
 - [x] 对光源直接采样，完善路径追踪积分
 - [x] 将材质 BRDF 的采样与计算分离
 - [ ] 完善天空盒，引入 CubeMap
@@ -29,7 +37,7 @@
 
 ### Part 3 - 引入各种重要性采样算法
 
-- [ ] 实现 MIS：对光源采样 + 对 BRDF 采样
+- [x] 实现 MIS：对光源采样 + 对 BRDF 采样
 - [ ] 实现环境光重要性采样（别名法）
 - [ ] 研究并实现 RIS
 - [ ] 尝试用 CPU 模拟 Nvidia 的 ReSTIR GI 算法
@@ -44,7 +52,7 @@
 
 ### Part 5 - 进一步完善我们的渲染器
 
-- [ ] 引入多线程
+- [x] 引入多线程
 - [ ] 完善模型读取功能
 - [ ] 完善 PBR 材质
 - [ ] 搭建漂亮的场景

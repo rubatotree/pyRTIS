@@ -2,22 +2,35 @@ import sys
 sys.path.append(".")
 from mathlib.graphics_math import *
 from scene_object.scene_object import *
+from scene_object.scene_object_group import *
 from materials.material import *
 
 class Light(SceneObject):
     pass
 
+class LightList(SceneObjectGroup):
+    def __init__(self):
+        self.obj_list = []
+        pass
+    def choose_uniform(self):
+        N = len(self.obj_list)
+        select_light_pdf = 1.0 / N
+        light_id = int(math.floor(N * random_float()))
+        return (self.obj_list[light_id], select_light_pdf)
+
 class TriangleLight(Light):
     material = None
     vertices = (vec3.zero, vec3.zero, vec3.zero)
-    def __init__(self, vertices, radiance:vec3):
+    def __init__(self, vertices, radiance:vec3, use_irradiance = False):
         self.vertices = vertices
         dircross = cross(vertices[1] - vertices[0], vertices[2] - vertices[0])
         self.normal = dircross.normalized()
         self.area = abs(dircross.norm()) / 2
         self.material = SimpleDirectionalLight(self.normal, radiance / self.area)
         self.radiance = radiance
-        self.irradiance = radiance / self.area
+        if use_irradiance:
+            self.radiance = radiance * self.area
+        self.irradiance = self.radiance / self.area
 
     def hit(self, r:ray, t_min:float, t_max:float):
         # zhuanlan.zhihu.com/p/451582864
@@ -66,14 +79,15 @@ class TriangleLight(Light):
         return (emission, direction, sampled_light_pos, sample_light_pdf)
 
 class SphereLight(Light):
-    def __init__(self, origin:vec3, radius:float, radiance:vec3, material=None):
+    def __init__(self, origin:vec3, radius:float, radiance:vec3, use_irradiance=False):
         self.origin = origin
         self.radius = radius
-        self.material = material
         self.area = math.pi * 4 * self.radius * self.radius
         self.material = SimpleLight(radiance / self.area)
         self.radiance = radiance
-        self.irradiance = radiance / self.area
+        if use_irradiance:
+            self.radiance = radiance * self.area
+        self.irradiance = self.radiance / self.area
     def hit(self, r:ray, t_min:float, t_max:float):
         oc = r.origin - self.origin
         a = r.direction.norm_sqr()
@@ -98,13 +112,13 @@ class SphereLight(Light):
                 return rec
         return HitRecord.inf() 
     def sample_light(self, pos:vec3):
-        dist = (pos - self.origin).norm()
         center_dir = (pos - self.origin).normalized()
 
         sample_dir, sample_pos_pdf = random_hemisphere_surface_uniform(center_dir)
         sampled_light_pos = self.origin + sample_dir * self.radius
         direction = (sampled_light_pos - pos).normalized()
         cosval = dot(-direction, sample_dir)
+        dist = (pos - sampled_light_pos).norm()
         if cosval <= 0:
             emission = vec3(0.0)
             sample_light_pdf = 0.0

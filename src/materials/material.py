@@ -20,9 +20,6 @@ class SimpleLambertian(Material):
     def __init__(self, albedo:vec3):
         self.albedo = albedo
     def sample(self, wo:vec3, rec:HitRecord):
-        # direction, pdf = random_sphere_surface_uniform()
-        # wi = (direction + rec.normal).safe_normalized()
-        # fr = self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
         direction, pdf = random_hemisphere_surface_cosine(rec.normal)
         wi = direction
         fr = self.albedo / math.pi
@@ -32,30 +29,36 @@ class SimpleLambertian(Material):
 
 class SimpleMetal(Material):
     albedo = vec3(1.0)
-    fuzz = 0.0
+    fuzz = 0.0001
     def __init__(self, albedo:vec3, fuzz = 0.0):
         self.albedo = albedo
+        if fuzz < 0.0001:
+            fuzz = 0.0001
         self.fuzz = fuzz
+        self.integrate_val = math.pi * ((2 * fuzz * fuzz - 1) * math.asin(fuzz) + fuzz * math.sqrt(1 - fuzz * fuzz))
     def sample(self, wo:vec3, rec:HitRecord):
-        direction, pdf = random_sphere_uniform()
+        direction, point_pdf = random_sphere_uniform()
         distort = direction * self.fuzz
-        wi = (reflect(-wo, rec.normal) + distort).safe_normalized()
-        fr = self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
+        wo_ref = reflect(-wo, rec.normal).normalized()
+        wi = (wo_ref + distort).safe_normalized()
+        LdotV= dot(wo_ref, wi)
+        d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
+        if d_sq <= 0:
+            return vec3.zero()
+        pdf = math.sqrt(d_sq) / self.integrate_val
+        cosval = max(dot(wi, rec.normal), 0.0001)
+        fr = self.albedo * pdf / cosval
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
-        wo_ref = reflect(-wo, rec.normal)
-        if self.fuzz == 0:
-            if dot(wo_ref, wi) > 0.99999:
-                pdf = 1.0 / 4 / math.pi * 3
-                return self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
-            else:
-                return vec3.zero()
-
-        d = ((wo_ref - wi).norm() / self.fuzz)
-        pdf = 0
-        if d >= 0 and d <= 1:
-            pdf = 3 * d * d * 1.0 / 4 / math.pi * 3
-        return self.albedo * pdf / (dot(rec.normal, wi) + 0.0001)
+        wo_ref = reflect(-wo, rec.normal).normalized()
+        LdotV= dot(wo_ref, wi)
+        d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
+        if d_sq <= 0:
+            return vec3.zero()
+        pdf = math.sqrt(d_sq) / self.integrate_val
+        cosval = max(dot(wi, rec.normal), 0.0001)
+        fr = self.albedo * pdf / cosval
+        return fr
 
 class SimpleTransparent(Material):
     ref_idx = 1.5
