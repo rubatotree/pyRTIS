@@ -34,7 +34,10 @@
 ./run.sh -o baseline -size 800*600 -spp 2048 -scene cornell_cubemap
 ```
 
-目前这一功能暂未做到对 Windows 的支持。
+在 Windows 系统下同理：
+```bat
+./run.bat -o baseline -size 800*600 -spp 2048 -scene cornell_cubemap
+```
 
  | 选项 | 作用 |
  |----|----------|

@@ -24,6 +24,25 @@ def output_ppm(filename, img):
 
     imgfile.close()
 
+def output_nogamma(filename, img):
+    imgfile = open(filename, 'w')
+    rows = len(img)
+    if rows <= 0:
+        return False
+    cols = len(img[0])
+
+    imgfile.write(f'{cols} {rows}\n')
+
+    for i in range(rows):
+        for j in range(cols):
+            r = "{:.5f}".format(img[i][j].r()).rstrip("0").rstrip(".")
+            g = "{:.5f}".format(img[i][j].g()).rstrip("0").rstrip(".")
+            b = "{:.5f}".format(img[i][j].b()).rstrip("0").rstrip(".")
+            imgfile.write(f'{r} {g} {b}\n')
+
+    imgfile.close()
+
+
 def output_img(filename, img):
     height = len(img)
     width = len(img[0])
