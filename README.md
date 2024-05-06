@@ -17,12 +17,12 @@
 必需依赖：
 
 - matplotlib：输出各种数学图像
+- pillow 7.2：读取 Cubemap 格式天空盒文件；便于输出 jpeg 格式的文件，防止输出 GIF 时大分辨率、大 spp 的格式造成的存储容量过大问题。
 
 可选依赖：
 
 - PyPy 3.8：加速 Python 脚本的运行
 - FFmpeg：用于将 ppm 格式的图像转换为其他格式，包括采样数增加过程的 gif 图。
-- pillow 7.2（及其附带的 numpy, libjpeg, zlib, libtiff, libfreetype, littlecms, libwebp, tcl, openjpeg）：便于输出 jpeg 格式的文件，防止输出 GIF 时大分辨率、大 spp 的格式造成的存储容量过大问题。
 
 目前我还没有将程序调整至不需要这些可选依赖也能运行的版本。如果现在就想运行该项目，请安装这些可选依赖。
 
@@ -38,7 +38,7 @@
 - [x] 添加球形光源与矩形光源
 - [x] 对光源直接采样，完善路径追踪积分
 - [x] 将材质 BRDF 的采样与计算分离
-- [ ] 完善天空盒，引入 CubeMap
+- [x] 完善天空盒，引入 CubeMap
 - [ ] 用 BVH 优化射线求交性能
 
 ### Part 3 - 引入各种重要性采样算法

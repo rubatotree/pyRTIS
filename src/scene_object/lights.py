@@ -17,6 +17,8 @@ class LightList(SceneObjectGroup):
         select_light_pdf = 1.0 / N
         light_id = int(math.floor(N * random_float()))
         return (self.obj_list[light_id], select_light_pdf)
+    def __len__(self):
+        return len(self.obj_list)
 
 class TriangleLight(Light):
     material = None

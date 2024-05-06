@@ -13,17 +13,18 @@ from scene_object.camera import *
 from materials.material import *
 from core.path_integrator import *
 
-output_gif = True 
+output_gif = False 
 use_pillow = False
 compress_output = True
 
 width, height = 800, 600
-spp = 32
+spp = 16
 thread_num = 32
 backup_num = 100
 
 main_scene = scene_cornell_box()
 # main_scene = scene_mis()
+# main_scene = scene_skybox_test()
 
 col_sum = []
 img = []

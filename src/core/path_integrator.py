@@ -28,38 +28,39 @@ def shade_path_tracer(r, scene, depth):
         else:
             return vec3(0.0)
 
-    direct_light_is_lights = vec3(0.0)
-    direct_light_is_lights_pdf = 0.0
-    direct_light_is_brdf   = vec3(0.0)
-    direct_light_is_brdf_pdf = 0.0
+    if len(scene.light_list) > 0:
+        direct_light_is_lights = vec3(0.0)
+        direct_light_is_lights_pdf = 0.0
+        direct_light_is_brdf   = vec3(0.0)
+        direct_light_is_brdf_pdf = 0.0
 
-    # Sample the Lights
-    light, select_light_pdf = scene.light_list.choose_uniform()
-    light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
-    sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-    if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
-        fr = rec.material.bsdf(wi_light, wo, rec)
-        cosval = max(dot(wi_light, rec.normal), 0.0001)
-        direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
-        direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
+        # Sample the Lights
+        light, select_light_pdf = scene.light_list.choose_uniform()
+        light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
+        sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
+        if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
+            fr = rec.material.bsdf(wi_light, wo, rec)
+            cosval = max(dot(wi_light, rec.normal), 0.0001)
+            direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
+            direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
 
-    # Sample the BRDF
-    is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
-    is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
-    is_brdf_rec = scene.object_root.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
-    if is_brdf_rec.isLight:
-        direct_light_is_brdf_pdf = is_brdf_pdf
-        cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
-        direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
+        # Sample the BRDF
+        is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
+        is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
+        is_brdf_rec = scene.object_root.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
+        if is_brdf_rec.isLight:
+            direct_light_is_brdf_pdf = is_brdf_pdf
+            cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
+            direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
 
-    # MIS
-    # direct_light_is_lights_pdf = 0.0
-    # direct_light_is_brdf_pdf = 0.0
-    sum_weight = (direct_light_is_lights_pdf + direct_light_is_brdf_pdf)
-    if sum_weight > 0:
-        direct_light = (direct_light_is_lights_pdf * direct_light_is_lights + direct_light_is_brdf_pdf * direct_light_is_brdf) / sum_weight
+        # MIS
+        # direct_light_is_lights_pdf = 0.0
+        # direct_light_is_brdf_pdf = 0.0
+        sum_weight = (direct_light_is_lights_pdf + direct_light_is_brdf_pdf)
+        if sum_weight > 0:
+            direct_light = (direct_light_is_lights_pdf * direct_light_is_lights + direct_light_is_brdf_pdf * direct_light_is_brdf) / sum_weight
 
-    if random_float() > p_russian_roulette:
+    if depth > 0 and random_float() > p_russian_roulette:
         return direct_light
     
     le = rec.material.emission(wo, rec)
