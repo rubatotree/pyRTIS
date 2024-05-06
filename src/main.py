@@ -82,6 +82,7 @@ def read_args():
 
 col_sum = []
 img = []
+img_nogamma = []
 
 def calc_pixel(x, y):
     uv = (float(x) / width, float(y) / height)
@@ -98,11 +99,12 @@ def generate_img(frame):
     for j in range(height):
         for i in range(width):
             img_col = col_sum[j][i] / frame
+            img_nogamma[j][i] = col_sum[j][i] / frame
             if img_col.r() < 0 or img_col.g() < 0 or img_col.b() < 0:
                 print(f"\nError: ({img_col})\n(At ({i}, {j}))")
             for c in range(3):
                 img_col.e[c] = clamp(img_col.e[c], 0.0, 1.0)
-                img[j][i] = gamma_correction(img_col)
+            img[j][i] = gamma_correction(img_col)
 
 def main():
     global main_scene
@@ -111,11 +113,14 @@ def main():
     for j in range(height):
         row = []
         img_row = []
+        img_nogamma_row = []
         for i in range(width):
             row.append(vec3.zero())
             img_row.append(vec3.zero())
+            img_nogamma_row.append(vec3.zero())
         col_sum.append(row)
         img.append(img_row)
+        img_nogamma.append(img_nogamma_row)
 
     print(f'Image Size: {width} * {height}', flush=True)
 
@@ -173,6 +178,7 @@ def main():
             if img_num % backup_num == 0 and img_num > 0:
                 generate_img(img_num + 1)
                 output_ppm(f'./output/{output_filename}/temp/{img_num}.ppm', img)
+                output_nogamma(f'./output/{output_filename}/temp/{img_num}_nogamma.txt', img_nogamma)
         img_num += 1
         if time_limit_mode:
             if time.time() - start_time >= time_limit:
@@ -185,10 +191,10 @@ def main():
     time_str = '{:.3f}'.format(time.time() - start_time)
 
     generate_img(img_num)
+    output_nogamma(f'./output/{output_filename}/{output_filename}_nogamma.txt', img_nogamma)
+    output_img(f'./output/{output_filename}/{output_filename}.ppm', img)
     if use_pillow:
         output_img(f'./output/{output_filename}/{output_filename}.bmp', img)
-    else:
-        output_img(f'./output/{output_filename}/{output_filename}.ppm', img)
 
     logfile = open(f'./output/{output_filename}/log.txt', 'w')
     logfile.write(f'FileName = {output_filename}\n')
@@ -207,7 +213,7 @@ def main():
     if output_gif:
         logfile.write(f'Output GIF\n')
 
-    print(f'\nRayTracing Finish\n')
+    print(f'\nRayTracing Finish\nSaved image to', f'./output/{output_filename}/{output_filename}.ppm')
 
 if __name__ == "__main__":
     main()
