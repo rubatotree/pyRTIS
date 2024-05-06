@@ -26,6 +26,37 @@
 
 目前我还没有将程序调整至不需要这些可选依赖也能运行的版本。如果现在就想运行该项目，请安装这些可选依赖。
 
+## 命令行选项
+
+在 Linux 系统下，可以在项目根目录下通过 `run.sh` 自定义输出图像的行为。例如：
+
+```bash
+./run.sh -o baseline -size 800*600 -spp 2048 -scene cornell_cubemap
+```
+
+目前这一功能暂未做到对 Windows 的支持。
+
+ | 选项 | 作用 |
+ |----|----------|
+ | `-o <file>`| 输出图像到 `output/<file>` 目录下 |
+ | `-size <w>*<h>`| 设置输出图像的宽高 |
+ | `-spp <spp>`| 设置输出图像中每个像素点的采样数（在 Time Limit 模式下无效） |
+ | `-j <number>`| 设置程序运行的线程数 |
+ | `-backup <number>`| 设置每多少张图像做一次备份 |
+ | `-timelimit <time>`| 打开 Time Limit 模式并设置光追程序的运行时长 |
+ | `-scene <scenename>`| 设置场景（目前已有场景在下表中） |
+ | `-gif`| 输出 gif 图像 |
+ | `-pillow`| 用 pillow 直接输出 jpeg 格式的图像，而不是保存 ppm |
+ | `-compress-output`| 使程序输出的内容更窄 |
+
+ | 场景 | 描述 |
+ |----|----------|
+ | `cornell`| 渐变天空盒材质的 Cornell Box |
+ | `cornell_cubemap`| Cube Map 天空盒材质的 Cornell Box |
+ | `mis`| 测试 MIS 所用的经典场景 |
+ | `material`| 仅有 Cube Map 天空盒和一个小球，用于测试材质 |
+ | `oneweekend`| Ray Tracing in one weekend 的场景（目前玻璃材质渲染有误） |
+
 ## TODO List
 
 ### Part 1 - 将 C++ 版本的 Ray Tracing in One Weekend 改写为 Python（已完成）

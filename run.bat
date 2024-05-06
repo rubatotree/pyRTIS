@@ -3,7 +3,7 @@ rmdir /s /q output
 mkdir .\output\image
 mkdir .\output\image\temp
 
-pypy3 ./src/main.py image || goto failed
+pypy3 ./src/main.py || goto failed
 
 :succeed
 echo "===RUN SUCCESS==="

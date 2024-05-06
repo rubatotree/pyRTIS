@@ -73,17 +73,16 @@ class SimpleTransparent(Material):
         pdf = 1.0
         if etai_over_etat * sinTheta > 1.0 or random_float() < reflect_prob:
             wi = reflect(-wo, rec.normal)
-            fr = attenuation / (dot(rec.normal, wi) + 0.0001)
+            fr = pdf * attenuation / (dot(rec.normal, wi) + 0.0001)
             return (fr, wi, pdf)
         else:
             wi = refract(wo, rec.normal, etai_over_etat)
-            fr = attenuation / (dot(rec.normal, wi) + 0.0001)
+            fr = pdf * attenuation / (dot(rec.normal, wi) + 0.0001)
             return (fr, wi, pdf)
-
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         attenuation = vec3(1.0)
         etai_over_etat = (1.0 / self.ref_idx) if rec.front_face else self.ref_idx
-        fr = attenuation / dot(rec.normal, wi)
+        fr = attenuation / (dot(rec.normal, wi) + 0.0001)
         NdotV = min(dot(wo, rec.normal), 1.0)
         sinTheta = math.sqrt(1.0 - NdotV * NdotV)
         if etai_over_etat * sinTheta > 1.0:

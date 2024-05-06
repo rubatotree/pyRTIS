@@ -76,9 +76,13 @@ def scene_cornell_box() -> Scene:
     main_camera = Camera()
     main_camera.set_pos(vec3(0.0, 0.0, 4.0))
     main_camera.look_at(vec3(0.0, 0.0, 0.0))
-    # skybox = SkyBox_NeonNight()
-    skybox = SkyBox_FromCubeMap("miramar")
+    skybox = SkyBox_NeonNight()
     return Scene(obj_root, main_camera, skybox)
+
+def scene_cornell_box_cubemap() -> Scene:
+    scene = scene_cornell_box()
+    scene.skybox = SkyBox_FromCubeMap("miramar")
+    return scene
 
 def scene_mis() -> Scene:
     obj_root = SceneObjectGroup()
@@ -109,6 +113,14 @@ def scene_mis() -> Scene:
         obj_root.append(Triangle((p1, p2, p3), mat))
         obj_root.append(Triangle((p3, p2, p4), mat))
 
+    mat = SimpleLambertian(vec3(1.0))
+    v1 = vec3(-20, -1.3, -20)
+    v2 = vec3(20, -1.3, -20)
+    v3 = vec3(20, -1.3, 20)
+    v4 = vec3(-20, -1.3, 20)
+    obj_root.append(Triangle((v1, v2, v3), mat))
+    obj_root.append(Triangle((v3, v4, v1), mat))
+
     l_width = width * 1.3
 
     obj_root.append(SphereLight(vec3(-l_width / 2 + 1 * l_width / 5, 0.3, -0.5), 0.01, 5 * vec3(1.0, 0.6, 0.8), True))
@@ -119,7 +131,7 @@ def scene_mis() -> Scene:
     main_camera = Camera()
     main_camera.set_pos(vec3(0.0, 0.1, 2.0))
     main_camera.look_at(vec3(0.0, -0.5, -0.7))
-    skybox = SkyBox_ColorFill(vec3(0.2))
+    skybox = SkyBox_ColorFill(vec3(0.0))
     return Scene(obj_root, main_camera, skybox)
 
 def scene_one_weekend() -> Scene:
