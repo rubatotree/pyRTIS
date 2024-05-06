@@ -13,7 +13,7 @@ from scene_object.camera import *
 from materials.material import *
 from core.path_integrator import *
 
-output_gif = False 
+output_gif = True 
 use_pillow = False
 compress_output = True
 

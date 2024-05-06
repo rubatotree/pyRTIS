@@ -10,11 +10,11 @@ echo "===RUN SUCCESS==="
 if exist ".\output\image\image.ppm" (
     ffmpeg -loglevel quiet -y -i ./output/image/image.ppm ./output/image/image.bmp
     if exist ".\output\image\temp\0.ppm" (
-        ffmpeg -f image2 -r 20 -i "./output/image/temp/%%01d.ppm" ./output/image/image.gif
+        ffmpeg -loglevel quiet -f image2 -r 20 -i "./output/image/temp/%%01d.ppm" ./output/image/image.gif
     )
 ) else (
     if exist ".\output\image\temp\0.jpg" (
-        ffmpeg -f image2 -r 20 -i "./output/image/temp/%%01d.jpg" ./output/image/image.gif
+        ffmpeg -loglevel quiet -f image2 -r 20 -i "./output/image/temp/%%01d.jpg" ./output/image/image.gif
     )
 )
 exit 0
