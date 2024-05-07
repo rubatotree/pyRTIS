@@ -24,6 +24,22 @@ def output_ppm(filename, img):
 
     imgfile.close()
 
+def output_ppm_data(filename, data):
+    imgfile = open(filename, 'w')
+    rows = len(data)
+    if rows <= 0:
+        return False
+    cols = len(data[0])
+
+    imgfile.write(f'P3\n{cols} {rows}\n255\n')
+
+    for i in range(rows):
+        for j in range(cols):
+            x = int(clamp(255.999 * data[i][j], 0.0, 255.999))
+            imgfile.write(f'{x} {x} {x}\n')
+
+    imgfile.close()
+
 def output_nogamma(filename, img):
     imgfile = open(filename, 'w')
     rows = len(img)

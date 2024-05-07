@@ -67,3 +67,12 @@ def random_hemisphere_surface_cosine(normal=vec3(0,1,0)):
 def gamma_correction(col:vec3) -> vec3 :
     gamma = 1.0 / 2.2
     return vec3(col.e[0] ** gamma, col.e[1] ** gamma, col.e[2] ** gamma)
+
+def img_init(width, height, col=vec3(0.0)):
+    img = []
+    for j in range(height):
+        row = []
+        for i in range(width):
+            row.append(col)
+        img.append(row)
+    return img
