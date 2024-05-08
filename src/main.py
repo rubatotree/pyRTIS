@@ -17,7 +17,7 @@ output_gif = False
 use_pillow = False
 compress_output = False
 output_filename = "image"
-width, height = 400, 300
+width, height = 800, 600
 spp = 16
 thread_num = 1
 backup_num = 100
@@ -107,15 +107,17 @@ def main():
 
     if do_test:
         print("Reading Baseline...")
-        baseline = read_img("./data/baseline.bmp")
+        baseline = read_nogamma("./data/baseline_nogamma.txt")
         integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerNoIS(), PathTracerBRDFIS()]
         names = ["MIS", "LightsIS", "NoIS", "BRDFIS"]
         colors = ['red', 'blue', 'black', 'green']
 
         plt.rcParams.update({"font.size":8})
+        # plt.figure(figsize=(6, 8))
         plt.title("Energy-SPP map", fontsize=12)
         plt.xlabel('spp', fontsize=10)
         plt.ylabel('Energy', fontsize=10)
+        plt.ylim((0, 0.15))
         for i in range(len(integrators)):
             print(f"Testing {names[i]}...\n")
             renderer_core = RendererCore(integrators[i], main_scene, width, height, output_filename, baseline, do_test)

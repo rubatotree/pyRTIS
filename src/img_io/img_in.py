@@ -17,3 +17,20 @@ def read_img(filename):
             row.append(vec3(ls[i][j][0] / 256, ls[i][j][1] / 256, ls[i][j][2] / 256))
         img.append(row)
     return img
+
+def read_nogamma(filename):
+    f = open(filename)
+    wh = f.readline().split(" ")
+    w = int(wh[0])
+    h = int(wh[1])
+    img = img_init(w, h)
+    for i in range(h):
+        for j in range(w):
+            rgb = f.readline().split(" ")
+            r = float(rgb[0])
+            g = float(rgb[1])
+            b = float(rgb[2])
+            img[i][j] = vec3(r, g, b)
+    return img
+
+

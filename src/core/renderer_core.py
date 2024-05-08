@@ -70,7 +70,8 @@ class RendererCore:
             return
         for j in range(self.height):
             for i in range(self.width):
-                self.energy_map[j][i] = (self.img[j][i] - self.baseline[j][i]).norm_sqr() / 3
+                # self.energy_map[j][i] = (self.img[j][i] - self.baseline[j][i]).norm_sqr() / 3
+                self.energy_map[j][i] = (self.img_nogamma[j][i] - self.baseline[j][i]).norm_sqr() / 3
 
     def add_data_point(self, spp, time):
         if not self.do_test:
