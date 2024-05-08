@@ -129,13 +129,16 @@ def main():
             renderer_core.generate_img()
             output_nogamma(f'./output/{output_filename}/{output_filename}_{names[i]}_nogamma.txt', renderer_core.img_nogamma)
             output_img(f'./output/{output_filename}/{output_filename}_{names[i]}.bmp', renderer_core.img)
+            datafile = open(f'./output/{output_filename}/{output_filename}_{names[i]}_dataset.txt', 'w')
             spp_array = []
             time_array = []
             energy_array = []
             for data in renderer_core.datapoints:
+                datafile.write(f"{data.spp} {data.time} {data.energy}\n")
                 spp_array.append(data.spp)
                 time_array.append(data.time)
                 energy_array.append(data.energy)
+            datafile.close()
             X = np.array(spp_array)
             Y = np.array(energy_array)
             plt.plot(X, Y, color=colors[i], label=names[i])

@@ -31,6 +31,7 @@ def read_nogamma(filename):
             g = float(rgb[1])
             b = float(rgb[2])
             img[i][j] = vec3(r, g, b)
+    f.close()
     return img
 
 
