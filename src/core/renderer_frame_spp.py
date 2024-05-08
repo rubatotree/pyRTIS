@@ -45,14 +45,16 @@ class RendererFrameSPP(Renderer):
                 else:
                     print('\r\033[', f'\[{percent}%] \tFrame = {img_num+1}/{self.spp} \tLine={split_end}/{height} \tTime={time_str}(s)/{time_tot}(s) ', end='', flush=True)
 
+            self.renderer_core.generate_img()
+            self.renderer_core.generate_energy_map()
+            self.renderer_core.add_data_point(img_num + 1, time.time() - start_time)
             if self.output_gif:
-                self.renderer_core.generate_img()
                 if self.use_pillow:
                     output_img(f'./output/{self.renderer_core.output_filename}/temp/{img_num}.jpg', self.renderer_core.img)
                 else:
                     output_ppm(f'./output/{self.renderer_core.output_filename}/temp/{img_num}.ppm', self.renderer_core.img)
+                    output_ppm_data(f'./output/{self.renderer_core.output_filename}/energy/{img_num}.ppm', self.renderer_core.energy_map)
             if img_num % self.backup_num == 0 and img_num > 0:
-                self.renderer_core.generate_img()
                 output_ppm(f'./output/{self.renderer_core.output_filename}/temp/{img_num}.ppm', self.renderer_core.img)
                 output_nogamma(f'./output/{self.renderer_core.output_filename}/temp/{img_num}_nogamma.txt', self.renderer_core.img_nogamma)
         self.img_num = img_num

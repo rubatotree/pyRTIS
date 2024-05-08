@@ -5,6 +5,9 @@ from mathlib.graphics_math import *
 from img_io.img_output import *
 from scene_object.scenes import *
 import core
+import matplotlib.pyplot as plt
+import numpy as np
+from core.path_integrator import *
 from core.renderer_core import RendererCore
 from core.renderer_frame_spp import RendererFrameSPP
 from core.renderer_frame_timelimit import RendererFrameTimeLimit
@@ -21,6 +24,7 @@ backup_num = 100
 time_limit = -1
 scene_name = "cornell"
 vh_num = -1
+do_test = False
 
 scenes=dict()
 scenes["cornell"]=scene_cornell_box
@@ -30,7 +34,7 @@ scenes["mis"]=scene_mis
 scenes["oneweekend"]=scene_one_weekend
 
 def read_args():
-    global output_filename, width, height, spp, thread_num, backup_num, output_gif, use_pillow, compress_output, time_limit, scene_name, vh_num
+    global output_filename, width, height, spp, thread_num, backup_num, output_gif, use_pillow, compress_output, time_limit, scene_name, vh_num, do_test
     argc = len(sys.argv)
     for i in range(argc):
         if sys.argv[i] == "-gif":
@@ -45,6 +49,8 @@ def read_args():
             compress_output = True
         elif sys.argv[i] == "-nocompress-output":
             compress_output = False
+        elif sys.argv[i] == "-test":
+            do_test = True
         elif i < argc - 1:
             if sys.argv[i] == "-o":
                 output_filename = str(sys.argv[i + 1])
@@ -97,44 +103,82 @@ def main():
     if vh_num > 0:
         print("Variance Heuristic Mode")
 
-    start_time = time.time()
+    baseline = None
 
-    renderer_core = RendererCore(main_scene, width, height, output_filename)
-    renderer = None
-    if vh_num > 0:
-        renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)
-    elif time_limit_mode:
-        renderer = RendererFrameTimeLimit(renderer_core, time_limit, thread_num, backup_num, use_pillow, output_gif, compress_output)
+    if do_test:
+        print("Reading Baseline...")
+        baseline = read_img("./data/baseline.bmp")
+        integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerNoIS(), PathTracerBRDFIS()]
+        names = ["MIS", "LightsIS", "NoIS", "BRDFIS"]
+        colors = ['red', 'blue', 'black', 'green']
+
+        plt.rcParams.update({"font.size":8})
+        plt.title("Energy-SPP map", fontsize=12)
+        plt.xlabel('spp', fontsize=10)
+        plt.ylabel('Energy', fontsize=10)
+        for i in range(len(integrators)):
+            print(f"Testing {names[i]}...\n")
+            renderer_core = RendererCore(integrators[i], main_scene, width, height, output_filename, baseline, do_test)
+            if time_limit_mode:
+                renderer = RendererFrameTimeLimit(renderer_core, time_limit, thread_num, backup_num, use_pillow, output_gif, compress_output)
+            else:
+                renderer = RendererFrameSPP(renderer_core, spp, thread_num, backup_num, use_pillow, output_gif, compress_output)
+            renderer.render()
+            renderer_core.generate_img()
+            output_nogamma(f'./output/{output_filename}/{output_filename}_{names[i]}_nogamma.txt', renderer_core.img_nogamma)
+            output_img(f'./output/{output_filename}/{output_filename}_{names[i]}.bmp', renderer_core.img)
+            spp_array = []
+            time_array = []
+            energy_array = []
+            for data in renderer_core.datapoints:
+                spp_array.append(data.spp)
+                time_array.append(data.time)
+                energy_array.append(data.energy)
+            X = np.array(spp_array)
+            Y = np.array(energy_array)
+            plt.plot(X, Y, color=colors[i], label=names[i])
+
+        plt.legend(loc='best')
+        plt.savefig(f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
+        print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
     else:
-        renderer = RendererFrameSPP(renderer_core, spp, thread_num, backup_num, use_pillow, output_gif, compress_output)
+        start_time = time.time()
+        renderer_core = RendererCore(PathTracerMIS, main_scene, width, height, output_filename, baseline, do_test)
+        renderer = None
+        if vh_num > 0:
+            renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)
+        elif time_limit_mode:
+            renderer = RendererFrameTimeLimit(renderer_core, time_limit, thread_num, backup_num, use_pillow, output_gif, compress_output)
+        else:
+            renderer = RendererFrameSPP(renderer_core, spp, thread_num, backup_num, use_pillow, output_gif, compress_output)
 
-    renderer.render()
-    time_str = '{:.3f}'.format(renderer.render_time)
+        renderer.render()
+        time_str = '{:.3f}'.format(renderer.render_time)
 
-    renderer_core.generate_img()
-    output_nogamma(f'./output/{output_filename}/{output_filename}_nogamma.txt', renderer_core.img_nogamma)
-    output_img(f'./output/{output_filename}/{output_filename}.ppm', renderer_core.img)
-    if use_pillow:
-        output_img(f'./output/{output_filename}/{output_filename}.bmp', renderer_core.img)
+        renderer_core.generate_img()
+        output_nogamma(f'./output/{output_filename}/{output_filename}_nogamma.txt', renderer_core.img_nogamma)
+        output_ppm(f'./output/{output_filename}/{output_filename}.ppm', renderer_core.img)
+        if use_pillow:
+            output_img(f'./output/{output_filename}/{output_filename}.bmp', renderer_core.img)
 
-    logfile = open(f'./output/{output_filename}/log.txt', 'w')
-    logfile.write(f'FileName = {output_filename}\n')
-    logfile.write(f'Scene = {scene_name}\n')
-    logfile.write(f'Size = {width}*{height}\n')
-    if vh_num > 0:
-        logfile.write(f'sample_n = {vh_num} (Variance Heuristic Mode)\n')
-    elif time_limit_mode:
-        logfile.write(f'spp = {renderer.img_num}(Time Limit Mode)\n')
-    else:
-        logfile.write(f'spp = {renderer.img_num}\n')
+        logfile = open(f'./output/{output_filename}/log.txt', 'w')
+        logfile.write(f'FileName = {output_filename}\n')
+        logfile.write(f'Scene = {scene_name}\n')
+        logfile.write(f'Size = {width}*{height}\n')
+        if vh_num > 0:
+            logfile.write(f'sample_n = {vh_num} (Variance Heuristic Mode)\n')
+        elif time_limit_mode:
+            logfile.write(f'spp = {renderer.img_num}(Time Limit Mode)\n')
+        else:
+            logfile.write(f'spp = {renderer.img_num}\n')
 
-    logfile.write(f'Time = {time_str}\n')
-    if time_limit_mode:
-        logfile.write(f'Time Limit = {time_limit}\n')
-    if use_pillow:
-        logfile.write(f'Use Pillow\n')
-    if output_gif:
-        logfile.write(f'Output GIF\n')
+        logfile.write(f'Time = {time_str}\n')
+        if time_limit_mode:
+            logfile.write(f'Time Limit = {time_limit}\n')
+        if use_pillow:
+            logfile.write(f'Use Pillow\n')
+        if output_gif:
+            logfile.write(f'Output GIF\n')
 
     print(f'\nRayTracing Finish\nSaved image to', f'./output/{output_filename}/{output_filename}.ppm')
 
