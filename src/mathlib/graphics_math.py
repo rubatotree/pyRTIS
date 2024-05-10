@@ -9,6 +9,11 @@ def clamp(x, a, b):
         return b
     return x
 
+def clamp_vec(vec):
+    return vec3(clamp(vec.e[0], 0.0, 1.0), 
+                clamp(vec.e[1], 0.0, 1.0), 
+                clamp(vec.e[2], 0.0, 1.0))
+
 def lerp(a, b, m:float):
     return a * (1 - m) + b * m
 

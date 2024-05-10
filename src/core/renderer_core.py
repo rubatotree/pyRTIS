@@ -25,6 +25,8 @@ class RendererCore:
         self.output_filename = output_filename
         self.col_sum     = img_init(width, height)
         self.col_sum_sq  = img_init(width, height)
+        self.col_sum_clamp     = img_init(width, height)
+        self.col_sum_sq_clamp  = img_init(width, height)
         self.sample_n    = img_init(width, height, 0)
         self.img         = img_init(width, height)
         self.img_nogamma = img_init(width, height)
@@ -35,8 +37,8 @@ class RendererCore:
         # self.datapoints.append(DataPoint(0, 0, 1))
 
     def calc_variance(self, x, y):
-        sq =   self.col_sum_sq[y][x]
-        sumv = self.col_sum[y][x]
+        sq =   self.col_sum_sq_clamp[y][x]
+        sumv = self.col_sum_clamp[y][x]
         n =    self.sample_n[y][x]
         var_vec = sq / n - sumv * sumv / n / n
         return var_vec.norm()
@@ -45,8 +47,11 @@ class RendererCore:
         uv = ((x + random_float()) / self.width, 1 - (y + random_float()) / self.height)
         r = self.scene.main_camera.gen_ray(uv[0], uv[1])
         col = self.integrator.shade(r, self.scene)
+        colclamp = clamp_vec(col)
         self.col_sum[y][x] += col
+        self.col_sum_clamp[y][x] += colclamp
         self.col_sum_sq[y][x] += col * col
+        self.col_sum_sq_clamp[y][x] += colclamp * colclamp
         self.sample_n[y][x] += 1
 
     def render_lines(self, start, end):
