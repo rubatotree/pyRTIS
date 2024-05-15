@@ -46,7 +46,7 @@ class RendererCore:
     def calc_pixel(self, x, y):
         uv = ((x + random_float()) / self.width, 1 - (y + random_float()) / self.height)
         r = self.scene.main_camera.gen_ray(uv[0], uv[1])
-        col = self.integrator.shade(r, self.scene)
+        col = self.integrator.ray_color(r, self.scene)
         colclamp = clamp_vec(col)
         self.col_sum[y][x] += col
         self.col_sum_clamp[y][x] += colclamp
@@ -58,6 +58,7 @@ class RendererCore:
         for j in range(start, end):
             for i in range(self.width):
                 self.calc_pixel(i, j)
+        # print(f"LINE{start}")
 
     def generate_img(self):
         for j in range(self.height):

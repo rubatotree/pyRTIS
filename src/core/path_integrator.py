@@ -14,7 +14,7 @@ p_russian_roulette = 0.8
 
 class RayTracer:
     @abstractmethod
-    def shade(self, r, scene, depth=0):
+    def ray_color(self, r, scene):
         pass
 
 class PathTracerNoIS(RayTracer):
@@ -46,13 +46,16 @@ class PathTracerNoIS(RayTracer):
             global_light = le + li * fr * cosval / pdf
 
         return global_light
+    def ray_color(self, r, scene):
+        return self.shade(r, scene, 0)
 
 class PathTracerMIS(RayTracer):
-    def shade(self, r, scene, depth=0):
+    def shade(self, r, scene, depth=0, rec=None):
         direct_light = vec3(0.0)
         global_light = vec3(0.0)
 
-        rec = scene.object_root.hit(r, 0.0001, math.inf)
+        if rec == None:
+            rec = scene.object_root.hit(r, 0.0001, math.inf)
         direction = r.direction.normalized()
         wo = -direction
 
@@ -64,6 +67,8 @@ class PathTracerMIS(RayTracer):
                 return rec.material.emission(wo, rec)
             else:
                 return vec3(0.0)
+
+        brdf_fail_rec = None
 
         if len(scene.light_list) > 0:
             direct_light_is_lights = vec3(0.0)
@@ -89,6 +94,8 @@ class PathTracerMIS(RayTracer):
                 direct_light_is_brdf_pdf = is_brdf_pdf
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
+            else:
+                brdf_fail_rec = is_brdf_rec
 
             # MIS
             # direct_light_is_lights_pdf = 0.0
@@ -108,10 +115,12 @@ class PathTracerMIS(RayTracer):
         if fr.norm() < 0.000001 or wi.norm() < 0.00001:
             global_light = le
         else:
-            li = self.shade(ray(rec.pos, wi), scene, depth + 1)
+            li = self.shade(ray(rec.pos, wi), scene, depth + 1, brdf_fail_rec)
             global_light = le + li * fr * cosval / pdf
 
         return direct_light + global_light
+    def ray_color(self, r, scene):
+        return self.shade(r, scene, 0)
 
 class PathTracerLightsIS(RayTracer):
     def shade(self, r, scene, depth=0):
@@ -164,13 +173,17 @@ class PathTracerLightsIS(RayTracer):
             global_light = le + li * fr * cosval / pdf
 
         return direct_light + global_light
+    def ray_color(self, r, scene):
+        return self.shade(r, scene, 0)
 
 class PathTracerBRDFIS(RayTracer):
-    def shade(self, r, scene, depth=0):
+    def shade(self, r, scene, depth=0, rec=None):
         direct_light = vec3(0.0)
         global_light = vec3(0.0)
 
-        rec = scene.object_root.hit(r, 0.0001, math.inf)
+        if rec == None:
+            rec = scene.object_root.hit(r, 0.0001, math.inf)
+
         direction = r.direction.normalized()
         wo = -direction
 
@@ -183,6 +196,7 @@ class PathTracerBRDFIS(RayTracer):
             else:
                 return vec3(0.0)
 
+        brdf_fail_rec = None
         if len(scene.light_list) > 0:
             direct_light_is_lights = vec3(0.0)
             direct_light_is_lights_pdf = 0.0
@@ -197,6 +211,8 @@ class PathTracerBRDFIS(RayTracer):
                 direct_light_is_brdf_pdf = is_brdf_pdf
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
+            else:
+                brdf_fail_rec = is_brdf_rec
             direct_light = direct_light_is_brdf
 
         if depth > 0 and random_float() > p_russian_roulette:
@@ -210,7 +226,9 @@ class PathTracerBRDFIS(RayTracer):
         if fr.norm() < 0.000001 or wi.norm() < 0.00001:
             global_light = le
         else:
-            li = self.shade(ray(rec.pos, wi), scene, depth + 1)
+            li = self.shade(ray(rec.pos, wi), scene, depth + 1, brdf_fail_rec)
             global_light = le + li * fr * cosval / pdf
 
         return direct_light + global_light
+    def ray_color(self, r, scene):
+        return self.shade(r, scene, 0)
