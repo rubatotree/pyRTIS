@@ -46,6 +46,11 @@ class Triangle(SceneObject):
         normal = cross(E1, E2).normalized()
 
         S1E1 = dot(S1, E1)
+
+        # parallel to the triangle mesh: not hit
+        if S1E1 == 0:
+            return HitRecord.inf()
+
         t = dot(S2, E2) / S1E1
         b1 = dot(S1, S) / S1E1
         b2 = dot(S2, r.direction) / S1E1

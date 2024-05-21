@@ -1,6 +1,7 @@
 from mathlib.graphics_math import *
 from abc import abstractmethod
 from img_io.img_in import *
+from collections import deque
 
 class SkyBox:
     @abstractmethod
@@ -27,6 +28,9 @@ class SkyBox_NeonNight(SkyBox):
 # left, right, bottom, top, forward, back
 cubemap_filenames = [["negx", "posx", "negy", "posy", "negz", "posz"]]
 cubemap_suffix = ["bmp", "jpg", "png", "ppm", "webp"]
+base_forward = [vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, -1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1)]
+base_u = [vec3(0, 0, -1), vec3(0, 0, 1), vec3(1, 0, 0), vec3(1, 0, 0), vec3(1, 0, 0), vec3(-1, 0, 0)]
+base_v = [vec3(0, -1, 0), vec3(0, -1, 0), vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, -1, 0), vec3(0, -1, 0)]
 class SkyBox_FromCubeMap(SkyBox):
     filename_type_id = -1
     suffix = ""
@@ -34,6 +38,52 @@ class SkyBox_FromCubeMap(SkyBox):
     width = []
     height = []
     success = False
+    def make_alias_table(self):
+        list_pos = []
+        self.list_alias = []
+        self.list_p_alias = []
+        self.pdfs = []
+        list_weight = []
+        n = 0
+        weight_sum = 0
+        for k in range(6):
+            self.list_alias.append(img_init(self.width[k], self.height[k], (0, 0, 0)))
+            self.list_p_alias.append(img_init(self.width[k], self.height[k], 0))
+            self.pdfs.append(img_init(self.width[k], self.height[k], 1))
+            for i in range(self.height[k]):
+                for j in range(self.width[k]):
+                    w = self.images[k][i][j].norm()
+                    list_pos.append((k, i, j))
+                    self.list_alias[k][i][j] = (k, i, j)
+                    list_weight.append(w)
+                    n += 1
+                    weight_sum += w
+        deq_notfull = deque()
+        deq_full = deque()
+        for i in range(n):
+            img, r, c = list_pos[i]
+            u = 2 * c / self.width[img] - 1
+            v = 2 * r / self.height[img] - 1
+            dist_sq = vec3(u, v, 1).norm_sqr()
+            list_weight[i] *= n / weight_sum
+            self.pdfs[img][r][c] = list_weight[i] *dist_sq / 6
+            if list_weight[i] > 1:
+                deq_full.append(i)
+            elif list_weight[i] < 1:
+                deq_notfull.append(i)
+        while len(deq_full) > 0 and len(deq_notfull) > 0:
+            fl = deq_full.pop()
+            nfl = deq_notfull.pop()
+            fl_img, fl_r, fl_c = list_pos[fl]
+            nfl_img, nfl_r, nfl_c = list_pos[nfl]
+            self.list_p_alias[nfl_img][nfl_r][nfl_c] = 1 - list_weight[nfl]
+            self.list_alias[nfl_img][nfl_r][nfl_c] = list_pos[fl]
+            list_weight[fl] -= 1 - list_weight[nfl]
+            if list_weight[fl] < 1:
+                deq_notfull.append(fl)
+            elif list_weight[fl] > 1:
+                deq_full.append(fl)
+
     def __init__(self, filename:str):
         for i in range(len(cubemap_filenames)):
             for j in range(len(cubemap_suffix)):
@@ -56,6 +106,24 @@ class SkyBox_FromCubeMap(SkyBox):
                 self.height.append(len(self.images[i]))
         if len(self.images) == 6:
             success = True
+            self.make_alias_table()
+
+    def sample_dir(self):
+        img = int(random_float() * 6)
+        x = int(random_float() * self.width[img])
+        y = int(random_float() * self.height[img])
+        if random_float() < self.list_p_alias[img][y][x]:
+            img, y, x = self.list_alias[img][y][x]
+        direction = self.get_direction(img, x + random_float(), y + random_float())
+        sample_light_pdf = self.pdfs[img][y][x];
+        # print(f"IMG {img} X {x} Y {y} PDF {sample_light_pdf} DIR {direction}")
+        return direction, sample_light_pdf
+
+    # left, right, bottom, top, forward, back
+    def get_direction(self, img, x, y):
+        u = 2 * x / self.width[img] - 1
+        v = 2 * y / self.height[img] - 1
+        return (base_forward[img] + u * base_u[img] + v * base_v[img]).normalized()
 
     def sample(self, direction:vec3):
         img = 0

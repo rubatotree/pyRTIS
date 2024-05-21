@@ -80,7 +80,7 @@ def scene_cornell_box() -> Scene:
     obj_root.append(Sphere(vec3( 0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.7)))
     obj_root.append(Sphere(vec3( 0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 1.0)))
 
-    radiance = vec3(5.0)
+    radiance = vec3(3.0)
     obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))
     obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, -0.25), vec3( 0.25,  0.95,  0.25)), radiance))
     # obj_root.append(SphereLight(vec3(0.0, 0.5, 0.0), 0.1, radiance))
@@ -169,7 +169,7 @@ def scene_cornell_Light() -> Scene:
     obj_root.append(Sphere(vec3(0.45, -0.7, -0.1), 0.3, SimpleMetal(vec3(1.0, 0.6, 0.8))))
     # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
     # obj_root.append(Sphere(vec3(0.1, -0.8, 0.7), 0.2, SimpleTransparent(1.5)))
-    radiance = vec3(5.0)
+    radiance = vec3(3.0)
     # obj_root.append(SphereLight(vec3(0.0, 0.5, 0.0), 0.1, radiance))
     obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))
     obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, -0.25), vec3( 0.25,  0.95,  0.25)), radiance))
