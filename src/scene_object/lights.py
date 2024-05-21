@@ -4,6 +4,7 @@ from mathlib.graphics_math import *
 from scene_object.scene_object import *
 from scene_object.scene_object_group import *
 from materials.material import *
+from scene_object.skybox import *
 
 class Light(SceneObject):
     pass
@@ -127,4 +128,16 @@ class SphereLight(Light):
         else:
             emission = self.irradiance / math.pi
             sample_light_pdf = sample_pos_pdf / self.radius / self.radius / cosval * dist * dist
+        return (emission, direction, sampled_light_pos, sample_light_pdf)
+
+class DomeLight(Light):
+    def __init__(self, skybox:SkyBox):
+        self.skybox = skybox
+        self.material = SimpleSkybox(skybox)
+    def hit(self, r:ray, t_min:float, t_max:float):
+        return HitRecord.inf() 
+    def sample_light(self, pos:vec3):
+        direction, sample_light_pdf = self.skybox.sample_dir();
+        emission = self.skybox.sample(direction);
+        sampled_light_pos = vec3(math.inf, math.inf, math.inf) * direction
         return (emission, direction, sampled_light_pos, sample_light_pdf)

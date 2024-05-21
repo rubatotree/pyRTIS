@@ -12,11 +12,22 @@ class Scene:
         self.object_root = object_root
         self.main_camera = main_camera
         self.skybox = skybox
+        self.domelight = DomeLight(skybox)
         self.base_list = object_root.get_objects()
         self.light_list = LightList()
         for obj in self.base_list:
             if isinstance(obj, Light):
                 self.light_list.append(obj)
+        self.light_list.append(self.domelight)
+    def hit(self, r:ray, t_min:float, t_max:float):
+        rec_temp = self.object_root.hit(r, t_min, t_max)
+        if rec_temp.success:
+            return rec_temp
+        else:
+            rec = HitRecord(vec3(math.inf) * r.direction, -r.direction, math.inf, success=False)
+            rec.material = self.domelight.material
+            rec.isLight = True
+            return rec
 
 def scene_skybox_test() -> Scene:
     obj_root = SceneObjectGroup()
@@ -81,8 +92,99 @@ def scene_cornell_box() -> Scene:
 
 def scene_cornell_box_cubemap() -> Scene:
     scene = scene_cornell_box()
-    scene.skybox = SkyBox_FromCubeMap("miramar")
-    return scene
+    skybox = SkyBox_FromCubeMap("miramar")
+    return Scene(scene.object_root, scene.main_camera, skybox)
+
+def scene_cornell_ao() -> Scene:
+    obj_root = SceneObjectGroup()
+    mat  = SimpleLambertian(vec3(1.0, 1.0, 1.0))
+    matc = SimpleLambertian(vec3(1.0, 1.0, 1.0))
+    matl = SimpleLambertian(vec3(1.0, 0.0, 0.0))
+    matr = SimpleLambertian(vec3(0.0, 1.0, 0.0))
+    obj_root.append(Triangle((vec3(-1.0, -1.0, -1.0), vec3(-1.0, -1.0,  1.0), vec3( 1.0, -1.0,  1.0)), mat))
+    obj_root.append(Triangle((vec3(-1.0, -1.0, -1.0), vec3( 1.0, -1.0,  1.0), vec3( 1.0, -1.0, -1.0)), mat))
+    v0 = vec3(-0.75, -1.0, 0.0)
+    v1 = vec3(0.5, 0.0, -0.2)
+    v2 = vec3(0.2, 0.0, 0.5)
+    v3 = vec3(0.0, 1.2, 0.0)
+    obj_root.append(Triangle((v0     , v0 + v1 + v2     , v0 + v2          ), matc))
+    obj_root.append(Triangle((v0     , v0 + v1          , v0 + v1 + v2     ), matc))
+    obj_root.append(Triangle((v0 + v3, v0 + v1 + v2 + v3, v0 + v2 + v3     ), matc))
+    obj_root.append(Triangle((v0 + v3, v0 + v1 + v3     , v0 + v1 + v2 + v3), matc))
+    obj_root.append(Triangle((v0     , v0 + v1 + v3     , v0 + v1          ), matc))
+    obj_root.append(Triangle((v0     , v0 + v3          , v0 + v1 + v3     ), matc))
+    obj_root.append(Triangle((v0 + v2, v0 + v1 + v3 + v2, v0 + v1 + v2     ), matc))
+    obj_root.append(Triangle((v0 + v2, v0 + v3 + v2     , v0 + v1 + v3 + v2), matc))
+    obj_root.append(Triangle((v0     , v0 + v3 + v2     , v0 + v2          ), matc))
+    obj_root.append(Triangle((v0     , v0 + v3          , v0 + v3 + v2     ), matc))
+    obj_root.append(Triangle((v0 + v1, v0 + v3 + v2 + v1, v0 + v2 + v1     ), matc))
+    obj_root.append(Triangle((v0 + v1, v0 + v3 + v1     , v0 + v3 + v2 + v1), matc))
+    obj_root.append(Sphere(vec3(0.45, -0.7, -0.1), 0.3, SimpleMetal(vec3(1.0, 0.6, 0.8))))
+    # obj_root.append(Sphere(vec3(0.45, -0.7, -0.1), 0.3, matc))
+    # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
+
+    obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.0)))
+    obj_root.append(Sphere(vec3(-0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.2)))
+    obj_root.append(Sphere(vec3( 0.0, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.4)))
+    obj_root.append(Sphere(vec3( 0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.7)))
+    obj_root.append(Sphere(vec3( 0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 1.0)))
+    # obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15,  matc))
+    # obj_root.append(Sphere(vec3(-0.35, -0.85, 0.7), 0.15, matc))
+    # obj_root.append(Sphere(vec3( 0.0, -0.85, 0.7), 0.15,  matc))
+    # obj_root.append(Sphere(vec3( 0.35, -0.85, 0.7), 0.15, matc))
+    # obj_root.append(Sphere(vec3( 0.7, -0.85, 0.7), 0.15,  matc))
+
+    main_camera = Camera()
+    main_camera.set_pos(vec3(0.0, 0.0, 4.0))
+    main_camera.look_at(vec3(0.0, 0.0, 0.0))
+    # skybox = SkyBox_OneWeekend()
+    # skybox = SkyBox_ColorFill(vec3(1.0, 0.0, 1.0))
+    skybox = SkyBox_FromCubeMap("miramar")
+    return Scene(obj_root, main_camera, skybox)
+
+def scene_cornell_Light() -> Scene:
+    obj_root = SceneObjectGroup()
+    mat  = SimpleLambertian(vec3(1.0, 1.0, 1.0))
+    matc = SimpleLambertian(vec3(1.0, 1.0, 1.0))
+    matl = SimpleLambertian(vec3(1.0, 0.0, 0.0))
+    matr = SimpleLambertian(vec3(0.0, 1.0, 0.0))
+    obj_root.append(Triangle((vec3(-1.0, -1.0, -1.0), vec3(-1.0, -1.0,  1.0), vec3( 1.0, -1.0,  1.0)), mat))
+    obj_root.append(Triangle((vec3(-1.0, -1.0, -1.0), vec3( 1.0, -1.0,  1.0), vec3( 1.0, -1.0, -1.0)), mat))
+    v0 = vec3(-0.75, -1.0, 0.0)
+    v1 = vec3(0.5, 0.0, -0.2)
+    v2 = vec3(0.2, 0.0, 0.5)
+    v3 = vec3(0.0, 1.2, 0.0)
+    obj_root.append(Triangle((v0     , v0 + v1 + v2     , v0 + v2          ), matc))
+    obj_root.append(Triangle((v0     , v0 + v1          , v0 + v1 + v2     ), matc))
+    obj_root.append(Triangle((v0 + v3, v0 + v1 + v2 + v3, v0 + v2 + v3     ), matc))
+    obj_root.append(Triangle((v0 + v3, v0 + v1 + v3     , v0 + v1 + v2 + v3), matc))
+    obj_root.append(Triangle((v0     , v0 + v1 + v3     , v0 + v1          ), matc))
+    obj_root.append(Triangle((v0     , v0 + v3          , v0 + v1 + v3     ), matc))
+    obj_root.append(Triangle((v0 + v2, v0 + v1 + v3 + v2, v0 + v1 + v2     ), matc))
+    obj_root.append(Triangle((v0 + v2, v0 + v3 + v2     , v0 + v1 + v3 + v2), matc))
+    obj_root.append(Triangle((v0     , v0 + v3 + v2     , v0 + v2          ), matc))
+    obj_root.append(Triangle((v0     , v0 + v3          , v0 + v3 + v2     ), matc))
+    obj_root.append(Triangle((v0 + v1, v0 + v3 + v2 + v1, v0 + v2 + v1     ), matc))
+    obj_root.append(Triangle((v0 + v1, v0 + v3 + v1     , v0 + v3 + v2 + v1), matc))
+    obj_root.append(Sphere(vec3(0.45, -0.7, -0.1), 0.3, SimpleMetal(vec3(1.0, 0.6, 0.8))))
+    # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
+    # obj_root.append(Sphere(vec3(0.1, -0.8, 0.7), 0.2, SimpleTransparent(1.5)))
+    radiance = vec3(5.0)
+    # obj_root.append(SphereLight(vec3(0.0, 0.5, 0.0), 0.1, radiance))
+    obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, 0.25), vec3( -0.25,  0.95,  0.25)), radiance))
+    obj_root.append(TriangleLight((vec3(-0.25,  0.95, -0.25), vec3( 0.25,  0.95, -0.25), vec3( 0.25,  0.95,  0.25)), radiance))
+
+    obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.0)))
+    obj_root.append(Sphere(vec3(-0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.2)))
+    obj_root.append(Sphere(vec3( 0.0, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.4)))
+    obj_root.append(Sphere(vec3( 0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.7)))
+    obj_root.append(Sphere(vec3( 0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 1.0)))
+
+    main_camera = Camera()
+    main_camera.set_pos(vec3(0.0, 0.0, 4.0))
+    main_camera.look_at(vec3(0.0, 0.0, 0.0))
+    skybox = SkyBox_ColorFill(vec3(0))
+    return Scene(obj_root, main_camera, skybox)
 
 def scene_mis() -> Scene:
     obj_root = SceneObjectGroup()

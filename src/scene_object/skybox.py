@@ -6,6 +6,8 @@ class SkyBox:
     @abstractmethod
     def sample(self, direction:vec3) -> vec3:
         pass
+    def sample_dir(self) -> vec3:
+        return random_sphere_surface_uniform()
 
 class SkyBox_ColorFill(SkyBox):
     color = vec3(0.0)

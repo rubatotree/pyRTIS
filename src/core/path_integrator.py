@@ -28,9 +28,6 @@ class PathTracerNoIS(RayTracer):
         if not rec.success:
             return scene.skybox.sample(direction)
 
-        if rec.isLight:
-            return rec.material.emission(wo, rec)
-
         if depth > 0 and random_float() > p_russian_roulette:
             return vec3(0.0)
         
@@ -55,12 +52,9 @@ class PathTracerMIS(RayTracer):
         global_light = vec3(0.0)
 
         if rec == None:
-            rec = scene.object_root.hit(r, 0.0001, math.inf)
+            rec = scene.hit(r, 0.0001, math.inf)
         direction = r.direction.normalized()
         wo = -direction
-
-        if not rec.success:
-            return scene.skybox.sample(direction)
 
         if rec.isLight:
             if depth == 0:
@@ -79,8 +73,9 @@ class PathTracerMIS(RayTracer):
             # Sample the Lights
             light, select_light_pdf = scene.light_list.choose_uniform()
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
-            sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
+
+            sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
+            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.0001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
                 direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
@@ -89,7 +84,7 @@ class PathTracerMIS(RayTracer):
             # Sample the BRDF
             is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
             is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
-            is_brdf_rec = scene.object_root.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
+            is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
             if is_brdf_rec.isLight:
                 direct_light_is_brdf_pdf = is_brdf_pdf
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
@@ -127,12 +122,9 @@ class PathTracerLightsIS(RayTracer):
         direct_light = vec3(0.0)
         global_light = vec3(0.0)
 
-        rec = scene.object_root.hit(r, 0.0001, math.inf)
+        rec = scene.hit(r, 0.0001, math.inf)
         direction = r.direction.normalized()
         wo = -direction
-
-        if not rec.success:
-            return scene.skybox.sample(direction)
 
         if rec.isLight:
             if depth == 0:
@@ -143,14 +135,12 @@ class PathTracerLightsIS(RayTracer):
         if len(scene.light_list) > 0:
             direct_light_is_lights = vec3(0.0)
             direct_light_is_lights_pdf = 0.0
-            direct_light_is_brdf   = vec3(0.0)
-            direct_light_is_brdf_pdf = 0.0
 
-            # Sample the Lights
             light, select_light_pdf = scene.light_list.choose_uniform()
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
-            sample_light_rec = scene.object_root.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and (sample_light_rec.pos - light_pos).norm() < 0.0001:
+
+            sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
+            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.0001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
                 direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
@@ -182,13 +172,10 @@ class PathTracerBRDFIS(RayTracer):
         global_light = vec3(0.0)
 
         if rec == None:
-            rec = scene.object_root.hit(r, 0.0001, math.inf)
+            rec = scene.hit(r, 0.0001, math.inf)
 
         direction = r.direction.normalized()
         wo = -direction
-
-        if not rec.success:
-            return scene.skybox.sample(direction)
 
         if rec.isLight:
             if depth == 0:
@@ -206,7 +193,7 @@ class PathTracerBRDFIS(RayTracer):
             # Sample the BRDF
             is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
             is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
-            is_brdf_rec = scene.object_root.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
+            is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
             if is_brdf_rec.isLight:
                 direct_light_is_brdf_pdf = is_brdf_pdf
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)

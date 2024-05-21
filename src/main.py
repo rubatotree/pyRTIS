@@ -28,6 +28,8 @@ do_test = False
 
 scenes=dict()
 scenes["cornell"]=scene_cornell_box
+scenes["cornell_ao"]=scene_cornell_ao
+scenes["cornell_light"]=scene_cornell_Light
 scenes["cornell_cubemap"]=scene_cornell_box_cubemap
 scenes["material"]=scene_skybox_test
 scenes["mis"]=scene_mis

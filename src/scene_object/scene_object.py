@@ -23,7 +23,9 @@ class HitRecord:
         pass
     @staticmethod
     def inf():
-        return HitRecord(success=False)
+        rec = HitRecord(success=False)
+        rec.isLight = True
+        return rec
 
 class SceneObject:
     material = None

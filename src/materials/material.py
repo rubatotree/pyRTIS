@@ -5,6 +5,7 @@ sys.path.append(".")
 from mathlib.graphics_math import *
 from mathlib.ray import *
 from scene_object.scene_object import *
+from scene_object.skybox import *
 
 class Material:
     def emission(self, wo:vec3, rec:HitRecord):
@@ -45,17 +46,25 @@ class SimpleMetal(Material):
         d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
         if d_sq <= 0:
             return vec3.zero()
-        pdf = math.sqrt(d_sq) / self.integrate_val
+        d = math.sqrt(d_sq)
+        pdf = d / self.integrate_val
         cosval = max(dot(wi, rec.normal), 0.0001)
         fr = self.albedo * pdf / cosval
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+        if dot(wi, rec.normal) < 0 or dot(wo, rec.normal) < 0:
+            return vec3.zero()
+        wi = wi.normalized();
+        wo = wo.normalized();
         wo_ref = reflect(-wo, rec.normal).normalized()
-        LdotV= dot(wo_ref, wi)
+        LdotV = dot(wo_ref, wi)
+        if LdotV <= 0:
+            return vec3.zero()
         d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
         if d_sq <= 0:
             return vec3.zero()
-        pdf = math.sqrt(d_sq) / self.integrate_val
+        d = math.sqrt(d_sq)
+        pdf = d / self.integrate_val
         cosval = max(dot(wi, rec.normal), 0.0001)
         fr = self.albedo * pdf / cosval
         return fr
@@ -133,4 +142,15 @@ class SimpleLight(Material):
         return vec3(0.0)
     def emission(self, wo:vec3, rec:HitRecord):
         le = self.irradiance / math.pi
+        return le
+
+class SimpleSkybox(Material):
+    def __init__(self, skybox : SkyBox):
+        self.skybox = skybox
+    def sample(self, wo:vec3, rec:HitRecord):
+        return (vec3.zero(), vec3.zero(), 1.0)
+    def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+        return vec3(0.0)
+    def emission(self, wo:vec3, rec:HitRecord):
+        le = self.skybox.sample(-wo)
         return le

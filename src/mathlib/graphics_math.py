@@ -35,7 +35,7 @@ def random_float() -> float :
 
 def random_sphere_surface_uniform():
     x = random_float() * 2 * math.pi
-    y = random_float() * 2 * math.pi
+    y = random_float() * math.pi
     pdf = 1.0 / 4 / math.pi
     vec = vec3(math.cos(x) * math.sin(y), math.sin(x) * math.sin(y), math.cos(y))
     return (vec, pdf)
