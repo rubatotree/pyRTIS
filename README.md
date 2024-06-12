@@ -39,26 +39,26 @@
 ./run.bat -o baseline -size 800*600 -spp 2048 -scene cornell_cubemap
 ```
 
- | 选项 | 作用 |
- |----|----------|
- | `-o <file>`| 输出图像到 `output/<file>` 目录下 |
- | `-size <w>*<h>`| 设置输出图像的宽高 |
- | `-spp <spp>`| 设置输出图像中每个像素点的采样数（在 Time Limit 模式下无效） |
- | `-j <number>`| 设置程序运行的线程数 |
- | `-backup <number>`| 设置每多少张图像做一次备份 |
- | `-timelimit <time>`| 打开 Time Limit 模式并设置光追程序的运行时长 |
- | `-scene <scenename>`| 设置场景（目前已有场景在下表中） |
- | `-gif`| 输出 gif 图像 |
- | `-pillow`| 用 pillow 直接输出 jpeg 格式的图像，而不是保存 ppm |
- | `-compress-output`| 使程序输出的内容更窄 |
+| 选项 | 作用 |
+|----|----------|
+| `-o <file>`| 输出图像到 `output/<file>` 目录下 |
+| `-size <w>*<h>`| 设置输出图像的宽高 |
+| `-spp <spp>`| 设置输出图像中每个像素点的采样数（在 Time Limit 模式下无效） |
+| `-j <number>`| 设置程序运行的线程数 |
+| `-backup <number>`| 设置每多少张图像做一次备份 |
+| `-timelimit <time>`| 打开 Time Limit 模式并设置光追程序的运行时长 |
+| `-scene <scenename>`| 设置场景（目前已有场景在下表中） |
+| `-gif`| 输出 gif 图像 |
+| `-pillow`| 用 pillow 直接输出 jpeg 格式的图像，而不是保存 ppm |
+| `-compress-output`| 使程序输出的内容更窄 |
 
- | 场景 | 描述 |
- |----|----------|
- | `cornell`| 渐变天空盒材质的 Cornell Box |
- | `cornell_cubemap`| Cube Map 天空盒材质的 Cornell Box |
- | `mis`| 测试 MIS 所用的经典场景 |
- | `material`| 仅有 Cube Map 天空盒和一个小球，用于测试材质 |
- | `oneweekend`| Ray Tracing in one weekend 的场景（目前玻璃材质渲染有误） |
+| 场景 | 描述 |
+|----|----------|
+| `cornell`| 渐变天空盒材质的 Cornell Box |
+| `cornell_cubemap`| Cube Map 天空盒材质的 Cornell Box |
+| `mis`| 测试 MIS 所用的经典场景 |
+| `material`| 仅有 Cube Map 天空盒和一个小球，用于测试材质 |
+| `oneweekend`| Ray Tracing in one weekend 的场景（目前玻璃材质渲染有误） |
 
 ## TODO List
 
@@ -78,7 +78,7 @@
 ### Part 3 - 引入各种重要性采样算法
 
 - [x] 实现 MIS：对光源采样 + 对 BRDF 采样
-- [x] 实现环境光重要性采样（别名法）
+- [ ] 实现环境光重要性采样（别名法）
 - [ ] 研究并实现 RIS
 - [ ] 尝试用 CPU 模拟 Nvidia 的 ReSTIR GI 算法
 - [ ] 探索更多的重要性采样算法
@@ -97,3 +97,25 @@
 - [ ] 完善 PBR 材质
 - [ ] 搭建漂亮的场景
 - [ ] 设计动画渲染，并研究 ReSTIR GI 在动画渲染下的优化
+
+---
+
+目前因为环境光采样部分仍存在问题，现在输出不了正确的图像。以下是 5 月 10 日的版本生成的测试效果图像：
+
+![img](images/test2_energy_fig.jpg)
+
+No IS：
+
+![img](images/nois.jpg)
+
+BRDF IS：
+
+![img](images/brdfis.jpg)
+
+Lights IS：
+
+![img](images/lightsis.jpg)
+
+MIS：
+
+![img](images/mis.jpg)
