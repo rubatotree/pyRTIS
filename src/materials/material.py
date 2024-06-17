@@ -54,8 +54,8 @@ class SimpleMetal(Material):
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         if dot(wi, rec.normal) < 0 or dot(wo, rec.normal) < 0:
             return vec3.zero()
-        wi = wi.normalized();
-        wo = wo.normalized();
+        wi = wi.normalized()
+        wo = wo.normalized()
         wo_ref = reflect(-wo, rec.normal).normalized()
         LdotV = dot(wo_ref, wi)
         if LdotV <= 0:

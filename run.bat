@@ -5,7 +5,7 @@ set fname=image
 if "%~1"=="" goto end_parse_opts
 if "%~1"=="-o" (
     shift
-    set fname=%~1
+    set fname=%~2
     shift
     goto parse_opts
 )
@@ -40,7 +40,6 @@ if %errorlevel% equ 0 (
             ffmpeg -loglevel quiet -f image2 -r 20 -i ".\output\%fname%\temp\%%01d.jpg" ".\output\%fname%\%fname%.gif"
         )
     )
-    start ".\output\%fname%\%fname%.bmp"
 ) else (
     echo ===RUN FAIL===
     exit /b 1

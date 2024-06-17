@@ -9,6 +9,8 @@ class SkyBox:
         pass
     def sample_dir(self) -> vec3:
         return random_sphere_surface_uniform()
+    def sample_radiance(self, direction:vec3) -> vec3:
+        pass
 
 class SkyBox_ColorFill(SkyBox):
     color = vec3(0.0)
@@ -16,14 +18,20 @@ class SkyBox_ColorFill(SkyBox):
         self.color = color
     def sample(self, direction:vec3) -> vec3:
         return self.color
+    def sample_radiance(self, direction:vec3) -> vec3:
+        return self.color
 
 class SkyBox_OneWeekend(SkyBox):
     def sample(self, direction:vec3) -> vec3:
         return lerp(vec3(1.0), vec3(0.4, 0.6, 1.0), 0.5 * (direction.y() + 1.0) * 0.8 + 0.2)
+    def sample_radiance(self, direction:vec3) -> vec3:
+        return self.color
 
 class SkyBox_NeonNight(SkyBox):
     def sample(self, direction:vec3) -> vec3:
         return lerp(vec3(0.8, 0.0, 0.32), vec3(0.05, 0.0, 0.1), (direction.y() * 0.5 + 0.5) ** 0.5)
+    def sample_radiance(self, direction:vec3) -> vec3:
+        return self.color
 
 # left, right, bottom, top, forward, back
 cubemap_filenames = [["negx", "posx", "negy", "posy", "negz", "posz"]]
@@ -35,23 +43,21 @@ class SkyBox_FromCubeMap(SkyBox):
     filename_type_id = -1
     suffix = ""
     images = []
-    width = []
-    height = []
     success = False
     def make_alias_table(self):
         list_pos = []
         self.list_alias = []
         self.list_p_alias = []
-        self.pdfs = []
+        self.weights = []
         list_weight = []
         n = 0
         weight_sum = 0
         for k in range(6):
-            self.list_alias.append(img_init(self.width[k], self.height[k], (0, 0, 0)))
-            self.list_p_alias.append(img_init(self.width[k], self.height[k], 0))
-            self.pdfs.append(img_init(self.width[k], self.height[k], 1))
-            for i in range(self.height[k]):
-                for j in range(self.width[k]):
+            self.list_alias.append(img_init(self.width, self.height, (0, 0, 0)))
+            self.list_p_alias.append(img_init(self.width, self.height, 0))
+            self.weights.append(img_init(self.width, self.height, 1))
+            for i in range(self.height):
+                for j in range(self.width):
                     w = self.images[k][i][j].norm()
                     list_pos.append((k, i, j))
                     self.list_alias[k][i][j] = (k, i, j)
@@ -62,11 +68,11 @@ class SkyBox_FromCubeMap(SkyBox):
         deq_full = deque()
         for i in range(n):
             img, r, c = list_pos[i]
-            u = 2 * c / self.width[img] - 1
-            v = 2 * r / self.height[img] - 1
+            u = 2 * c / self.width - 1
+            v = 2 * r / self.height - 1
             dist_sq = vec3(u, v, 1).norm_sqr()
             list_weight[i] *= n / weight_sum
-            self.pdfs[img][r][c] = list_weight[i] *dist_sq / 6
+            self.weights[img][r][c] = list_weight[i]
             if list_weight[i] > 1:
                 deq_full.append(i)
             elif list_weight[i] < 1:
@@ -102,30 +108,30 @@ class SkyBox_FromCubeMap(SkyBox):
                     success = False
                     break
                 self.images.append(read_img(fname))
-                self.width.append(len(self.images[i][0]))
-                self.height.append(len(self.images[i]))
+            self.width = len(self.images[0][0])
+            self.height = len(self.images[0])
         if len(self.images) == 6:
             success = True
             self.make_alias_table()
 
     def sample_dir(self):
         img = int(random_float() * 6)
-        x = int(random_float() * self.width[img])
-        y = int(random_float() * self.height[img])
+        x = int(random_float() * self.width)
+        y = int(random_float() * self.height)
         if random_float() < self.list_p_alias[img][y][x]:
             img, y, x = self.list_alias[img][y][x]
         direction = self.get_direction(img, x + random_float(), y + random_float())
-        sample_light_pdf = self.pdfs[img][y][x];
+        sample_light_pdf = self.weights[img][y][x] / (6 * self.width * self.height)
         # print(f"IMG {img} X {x} Y {y} PDF {sample_light_pdf} DIR {direction}")
         return direction, sample_light_pdf
 
     # left, right, bottom, top, forward, back
     def get_direction(self, img, x, y):
-        u = 2 * x / self.width[img] - 1
-        v = 2 * y / self.height[img] - 1
+        u = 2 * x / self.width - 1
+        v = 2 * y / self.height - 1
         return (base_forward[img] + u * base_u[img] + v * base_v[img]).normalized()
 
-    def sample(self, direction:vec3):
+    def calc_uv(self, direction:vec3):
         img = 0
         u = 0
         v = 0
@@ -158,7 +164,19 @@ class SkyBox_FromCubeMap(SkyBox):
         v = v * 0.5 + 0.5
         u = clamp(u, 0, 1)
         v = clamp(v, 0, 1)
-        pixel_u = int(u * (self.width[img] - 0.0001))
-        pixel_v = int(v * (self.height[img] - 0.0001))
+        return (img, u, v)
+
+    def sample_radiance(self, direction:vec3):
+        img, u, v = self.calc_uv(direction)
+        pixel_u = int(u * (self.width - 0.0001))
+        pixel_v = int(v * (self.height - 0.0001))
+        col = self.images[img][pixel_v][pixel_u]
+        radiance = col * (1 / self.width / self.height) / (6 * 4 * (u * u + v * v + 1))
+        return radiance
+
+    def sample(self, direction:vec3):
+        img, u, v = self.calc_uv(direction)
+        pixel_u = int(u * (self.width - 0.0001))
+        pixel_v = int(v * (self.height - 0.0001))
         return self.images[img][pixel_v][pixel_u]
 
