@@ -44,12 +44,12 @@ class SimpleMetal(Material):
         wi = (wo_ref + distort).safe_normalized()
         LdotV= dot(wo_ref, wi)
         d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
-        if d_sq <= 0:
-            return vec3.zero()
         d = math.sqrt(d_sq)
         pdf = d / self.integrate_val
         cosval = max(dot(wi, rec.normal), 0.0001)
         fr = self.albedo * pdf / cosval
+        if LdotV <= 0 or d_sq <= 0:
+            fr = vec3.zero()
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         if dot(wi, rec.normal) < 0 or dot(wo, rec.normal) < 0:
@@ -126,8 +126,9 @@ class SimpleDirectionalLight(Material):
         pdf = 1.0 / 4 / math.pi
         return self.back_albedo * pdf / (dot(rec.normal, wi) + 0.0001)
     def emission(self, wo:vec3, rec:HitRecord):
-        if dot(self.normal, wo) > 0:
-            le = self.irradiance / math.pi
+        cosval = dot(self.normal, wo)
+        if cosval > 0:
+            le = self.irradiance * cosval
         else:
             le = vec3.zero()
         return le

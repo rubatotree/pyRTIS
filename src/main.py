@@ -150,7 +150,7 @@ def main():
         print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
     else:
         start_time = time.time()
-        renderer_core = RendererCore(PathTracerMIS(), main_scene, width, height, output_filename, baseline, do_test)
+        renderer_core = RendererCore(PathTracerBRDFIS(), main_scene, width, height, output_filename, baseline, do_test)
         renderer = None
         if vh_num > 0:
             renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)

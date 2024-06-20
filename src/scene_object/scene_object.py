@@ -25,6 +25,7 @@ class HitRecord:
     def inf():
         rec = HitRecord(success=False)
         rec.isLight = True
+        rec.success = False
         return rec
 
 class SceneObject:

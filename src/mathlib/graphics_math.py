@@ -9,6 +9,13 @@ def clamp(x, a, b):
         return b
     return x
 
+def sign(x):
+    if x > 0:
+        return 1
+    if x < 0:
+        return -1
+    return 0
+
 def clamp_vec(vec):
     return vec3(clamp(vec.e[0], 0.0, 1.0), 
                 clamp(vec.e[1], 0.0, 1.0), 
@@ -34,18 +41,24 @@ def random_float() -> float :
     return random.random()
 
 def random_sphere_surface_uniform():
-    x = random_float() * 2 * math.pi
-    y = random_float() * math.pi
+    # RTX Gems P168
+    u = (random_float() * 2 - 1, random_float() * 2 - 1)
+    d = 1 - (abs(u[0]) + abs(u[1]))
+    r = 1 - abs(d)
+    phi = 0 if (r == 0) else ((math.pi / 4) * (abs(u[1]) - abs(u[0])) / (r + 1))
+    f = r * math.sqrt(2 - r * r)
+    x = f * sign(u[0]) * math.cos(phi)
+    y = f * sign(u[1]) * math.sin(phi)
+    z = sign(d) * (1 - r * r)
     pdf = 1.0 / 4 / math.pi
-    vec = vec3(math.cos(x) * math.sin(y), math.sin(x) * math.sin(y), math.cos(y))
+    vec = vec3(x, y, z)
     return (vec, pdf)
 
 def random_sphere_uniform():
-    x = random_float() * 2 * math.pi
-    y = random_float() * 2 * math.pi
+    direction, direction_pdf = random_sphere_surface_uniform()
     r = random_float()
     pdf = 1.0 / 4 / math.pi * 3
-    vec = vec3(math.cos(x) * math.sin(y), math.sin(x) * math.sin(y), math.cos(y)) * (r ** 0.333)
+    vec = direction * (r ** 0.333333)
     return (vec, pdf)
 
 def random_hemisphere_surface_uniform(normal):

@@ -116,12 +116,14 @@ class SkyBox_FromCubeMap(SkyBox):
 
     def sample_dir(self):
         img = int(random_float() * 6)
-        x = int(random_float() * self.width)
-        y = int(random_float() * self.height)
+        u = random_float()
+        v = random_float()
+        x = int(u * self.width)
+        y = int(v * self.height)
         if random_float() < self.list_p_alias[img][y][x]:
             img, y, x = self.list_alias[img][y][x]
         direction = self.get_direction(img, x + random_float(), y + random_float())
-        sample_light_pdf = self.weights[img][y][x] / (6 * self.width * self.height)
+        sample_light_pdf = self.weights[img][y][x] * (1 + u * u + v * v) / (math.pi * 4)
         # print(f"IMG {img} X {x} Y {y} PDF {sample_light_pdf} DIR {direction}")
         return direction, sample_light_pdf
 
@@ -171,7 +173,7 @@ class SkyBox_FromCubeMap(SkyBox):
         pixel_u = int(u * (self.width - 0.0001))
         pixel_v = int(v * (self.height - 0.0001))
         col = self.images[img][pixel_v][pixel_u]
-        radiance = col * (1 / self.width / self.height) / (6 * 4 * (u * u + v * v + 1))
+        radiance = col
         return radiance
 
     def sample(self, direction:vec3):

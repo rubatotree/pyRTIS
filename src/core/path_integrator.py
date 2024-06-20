@@ -22,6 +22,7 @@ class PathTracerNoIS(RayTracer):
         global_light = vec3(0.0)
 
         rec = scene.object_root.hit(r, 0.0001, math.inf)
+
         direction = r.direction.normalized()
         wo = -direction
 
@@ -53,12 +54,15 @@ class PathTracerMIS(RayTracer):
 
         if rec == None:
             rec = scene.hit(r, 0.0001, math.inf)
+
         direction = r.direction.normalized()
         wo = -direction
 
         if rec.isLight:
             if depth == 0:
                 return rec.material.emission(wo, rec)
+            elif (not environment_as_light) and (not rec.success):
+                return scene.skybox.sample(direction)
             else:
                 return vec3(0.0)
 
@@ -85,7 +89,7 @@ class PathTracerMIS(RayTracer):
             is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
             is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
             is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
-            if is_brdf_rec.isLight:
+            if is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
                 direct_light_is_brdf_pdf = is_brdf_pdf
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
@@ -103,8 +107,14 @@ class PathTracerMIS(RayTracer):
             return direct_light
         
         le = rec.material.emission(wo, rec)
-        fr, wi, pdf = rec.material.sample(wo, rec)
-        fr = rec.material.bsdf(wi, wo, rec)
+
+        if len(scene.light_list) > 0:
+            fr, wi, pdf = is_brdf_fr, is_brdf_wi, is_brdf_pdf
+
+        if brdf_fail_rec == None:
+            fr, wi, pdf = rec.material.sample(wo, rec)
+            fr = rec.material.bsdf(wi, wo, rec)
+
         cosval = max(dot(wi, rec.normal), 0.0001)
             
         if fr.norm() < 0.000001 or wi.norm() < 0.00001:
@@ -129,6 +139,8 @@ class PathTracerLightsIS(RayTracer):
         if rec.isLight:
             if depth == 0:
                 return rec.material.emission(wo, rec)
+            elif (not environment_as_light) and (not rec.success):
+                return scene.skybox.sample(direction)
             else:
                 return vec3(0.0)
 
@@ -180,34 +192,38 @@ class PathTracerBRDFIS(RayTracer):
         if rec.isLight:
             if depth == 0:
                 return rec.material.emission(wo, rec)
+            elif (not environment_as_light) and (not rec.success):
+                return scene.skybox.sample(direction)
             else:
                 return vec3(0.0)
 
         brdf_fail_rec = None
-        if len(scene.light_list) > 0:
-            direct_light_is_lights = vec3(0.0)
-            direct_light_is_lights_pdf = 0.0
-            direct_light_is_brdf   = vec3(0.0)
-            direct_light_is_brdf_pdf = 0.0
+        direct_light_is_brdf = vec3(0.0)
+        direct_light_is_brdf_pdf = 0.0
 
-            # Sample the BRDF
-            is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
-            is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
-            is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
-            if is_brdf_rec.isLight:
-                direct_light_is_brdf_pdf = is_brdf_pdf
-                cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
-                direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
-            else:
-                brdf_fail_rec = is_brdf_rec
-            direct_light = direct_light_is_brdf
+        # Sample the BRDF
+        is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
+        # is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
+        is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
+
+        if is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
+            direct_light_is_brdf_pdf = is_brdf_pdf
+            cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
+            direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
+        else:
+            brdf_fail_rec = is_brdf_rec
+        direct_light = direct_light_is_brdf
 
         if depth > 0 and random_float() > p_russian_roulette:
             return direct_light
         
         le = rec.material.emission(wo, rec)
-        fr, wi, pdf = rec.material.sample(wo, rec)
-        fr = rec.material.bsdf(wi, wo, rec)
+        fr, wi, pdf = is_brdf_fr, is_brdf_wi, is_brdf_pdf
+
+        if brdf_fail_rec == None:
+            fr, wi, pdf = rec.material.sample(wo, rec)
+            fr = rec.material.bsdf(wi, wo, rec)
+
         cosval = max(dot(wi, rec.normal), 0.0001)
             
         if fr.norm() < 0.000001 or wi.norm() < 0.00001:
