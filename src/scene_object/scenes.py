@@ -75,8 +75,8 @@ def scene_cornell_box() -> Scene:
     # obj_root.append(Sphere(vec3(0.45, -0.7, 0.3), 0.3, mat))
     # obj_root.append(Sphere(vec3(0.1, -0.8, 0.7), 0.2, SimpleTransparent(1.5)))
 
-    # obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.0)))
-    obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleLambertian(vec3(1.0))))
+    obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.0)))
+    # obj_root.append(Sphere(vec3(-0.7, -0.85, 0.7), 0.15, SimpleLambertian(vec3(1.0))))
     obj_root.append(Sphere(vec3(-0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.2)))
     obj_root.append(Sphere(vec3( 0.0, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.4)))
     obj_root.append(Sphere(vec3( 0.35, -0.85, 0.7), 0.15, SimpleMetal(vec3(1.0), 0.7)))

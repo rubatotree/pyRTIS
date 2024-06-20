@@ -110,8 +110,8 @@ def main():
     if do_test:
         print("Reading Baseline...")
         baseline = read_nogamma("./data/baseline_nogamma.txt")
-        integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerNoIS(), PathTracerBRDFIS()]
-        names = ["MIS", "LightsIS", "NoIS", "BRDFIS"]
+        integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
+        names = ["MIS", "LightsIS", "CosineIS", "BRDFIS"]
         colors = ['red', 'blue', 'black', 'green']
 
         plt.rcParams.update({"font.size":8})
@@ -150,7 +150,7 @@ def main():
         print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
     else:
         start_time = time.time()
-        renderer_core = RendererCore(PathTracerBRDFIS(), main_scene, width, height, output_filename, baseline, do_test)
+        renderer_core = RendererCore(PathTracerMIS(), main_scene, width, height, output_filename, baseline, do_test)
         renderer = None
         if vh_num > 0:
             renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)

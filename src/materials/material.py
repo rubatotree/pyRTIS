@@ -38,18 +38,11 @@ class SimpleMetal(Material):
         self.fuzz = fuzz
         self.integrate_val = math.pi * ((2 * fuzz * fuzz - 1) * math.asin(fuzz) + fuzz * math.sqrt(1 - fuzz * fuzz))
     def sample(self, wo:vec3, rec:HitRecord):
-        direction, point_pdf = random_sphere_uniform()
-        distort = direction * self.fuzz
+        a2 = self.fuzz ** 2
         wo_ref = reflect(-wo, rec.normal).normalized()
-        wi = (wo_ref + distort).safe_normalized()
-        LdotV= dot(wo_ref, wi)
-        d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
-        d = math.sqrt(d_sq)
-        pdf = d / self.integrate_val
+        wi, pdf = random_ggx(a2, wo_ref)
         cosval = max(dot(wi, rec.normal), 0.0001)
-        fr = self.albedo * pdf / cosval
-        if LdotV <= 0 or d_sq <= 0:
-            fr = vec3.zero()
+        fr = pdf * self.albedo / cosval
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         if dot(wi, rec.normal) < 0 or dot(wo, rec.normal) < 0:
@@ -60,11 +53,8 @@ class SimpleMetal(Material):
         LdotV = dot(wo_ref, wi)
         if LdotV <= 0:
             return vec3.zero()
-        d_sq = 4 * (self.fuzz * self.fuzz + LdotV * LdotV - 1)
-        if d_sq <= 0:
-            return vec3.zero()
-        d = math.sqrt(d_sq)
-        pdf = d / self.integrate_val
+        a2 = self.fuzz ** 2
+        pdf = random_ggx_pdf(a2, LdotV)
         cosval = max(dot(wi, rec.normal), 0.0001)
         fr = self.albedo * pdf / cosval
         return fr
@@ -126,9 +116,9 @@ class SimpleDirectionalLight(Material):
         pdf = 1.0 / 4 / math.pi
         return self.back_albedo * pdf / (dot(rec.normal, wi) + 0.0001)
     def emission(self, wo:vec3, rec:HitRecord):
-        cosval = dot(self.normal.normalized(), wo.normalized())
+        cosval = dot(self.normal, wo)
         if cosval > 0:
-            le = self.irradiance * cosval / math.pi
+            le = self.irradiance / math.pi
         else:
             le = vec3.zero()
         return le
@@ -142,7 +132,11 @@ class SimpleLight(Material):
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         return vec3(0.0)
     def emission(self, wo:vec3, rec:HitRecord):
-        le = self.irradiance / math.pi
+        cosval = dot(self.normal, wo)
+        if cosval > 0:
+            le = self.irradiance / math.pi
+        else:
+            le = vec3.zero()
         return le
 
 class SimpleSkybox(Material):

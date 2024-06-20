@@ -17,7 +17,7 @@ class RayTracer:
     def ray_color(self, r, scene):
         pass
 
-class PathTracerNoIS(RayTracer):
+class PathTracerCosineIS(RayTracer):
     def shade(self, r, scene, depth=0):
         global_light = vec3(0.0)
 
@@ -33,7 +33,8 @@ class PathTracerNoIS(RayTracer):
             return vec3(0.0)
         
         le = rec.material.emission(wo, rec)
-        fr, wi, pdf = rec.material.sample(wo, rec)
+        wi, pdf = random_hemisphere_surface_cosine(rec.normal)
+        # fr, wi, pdf = rec.material.sample(wo, rec)
         fr = rec.material.bsdf(wi, wo, rec)
         cosval = max(dot(wi, rec.normal), 0.0001)
             
@@ -152,7 +153,7 @@ class PathTracerLightsIS(RayTracer):
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
 
             sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.0001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
+            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
                 direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf

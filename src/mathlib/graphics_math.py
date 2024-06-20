@@ -40,6 +40,13 @@ def schlick(cosine:float, ref_idx:float):
 def random_float() -> float :
     return random.random()
 
+def auto_TBN(vec_base, normal):
+    base_x = cross(normal, vec3(0.0, 1.0, 0.0)).safe_normalized()
+    if base_x.norm() < 0.001:
+        base_x = cross(normal, vec3(1.0, 0.0, 0.0)).safe_normalized()
+    base_y = cross(base_x, normal)
+    return vec_base.x() * base_x + vec_base.y() * base_y + vec_base.z() * normal
+
 def random_sphere_surface_uniform():
     # RTX Gems P168
     u = (random_float() * 2 - 1, random_float() * 2 - 1)
@@ -68,17 +75,41 @@ def random_hemisphere_surface_uniform(normal):
     pdf *= 2
     return (vec, pdf)
 
+def random_phong(s, normal=vec3(0,1,0)):
+    u, v = random_float(), random_float()
+    costheta = (1 - u) ** (1 / (1 + s))
+    sintheta = math.sqrt(1 - costheta * costheta)
+    phi = 2 * math.pi * v
+    vec_base = vec3(math.cos(phi) * sintheta, math.sin(phi) * sintheta, costheta)
+    pdf = random_phong_pdf(s, costheta)
+    vec = auto_TBN(vec_base, normal)
+    return (vec, pdf)
+
+def random_phong_pdf(s, costheta):
+    return (s + 1) * (costheta ** s) / 2 / math.pi
+
+def random_ggx(a2, normal=vec3(0,1,0)):
+    u, v = random_float(), random_float()
+    phi = 2 * math.pi * u
+    costheta = math.sqrt((1 - v) / (1 + (a2 - 1) * v))
+    sintheta = math.sqrt(1 - costheta * costheta)
+    vec_base = vec3(math.cos(phi) * sintheta, math.sin(phi) * sintheta, costheta)
+    vec = auto_TBN(vec_base, normal)
+    pdf = random_ggx_pdf(a2, costheta)
+    return (vec, pdf)
+    
+def random_ggx_pdf(a2, costheta):
+    d = (costheta * a2 - costheta) * costheta + 1
+    D = a2 / (math.pi * d * d)
+    return D * costheta
+
 def random_hemisphere_surface_cosine(normal=vec3(0,1,0)):
     phi = random_float() * math.pi * 2
     r_sq = random_float()
     r = math.sqrt(r_sq)
     h = math.sqrt(1 - r_sq)
     vec_base = vec3(math.cos(phi) * r, math.sin(phi) * r, h)
-    base_x = cross(normal, vec3(0.0, 1.0, 0.0)).safe_normalized()
-    if base_x.norm() < 0.001:
-        base_x = cross(normal, vec3(1.0, 0.0, 0.0)).safe_normalized()
-    base_y = cross(base_x, normal)
-    vec = vec_base.x() * base_x + vec_base.y() * base_y + vec_base.z() * normal
+    vec = auto_TBN(vec_base, normal)
     pdf = h / math.pi
     return (vec, pdf)
 
