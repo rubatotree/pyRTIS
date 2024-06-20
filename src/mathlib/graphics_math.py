@@ -45,7 +45,7 @@ def random_sphere_surface_uniform():
     u = (random_float() * 2 - 1, random_float() * 2 - 1)
     d = 1 - (abs(u[0]) + abs(u[1]))
     r = 1 - abs(d)
-    phi = 0 if (r == 0) else ((math.pi / 4) * (abs(u[1]) - abs(u[0])) / (r + 1))
+    phi = 0 if (r == 0) else ((math.pi / 4) * ((abs(u[1]) - abs(u[0])) / r + 1))
     f = r * math.sqrt(2 - r * r)
     x = f * sign(u[0]) * math.cos(phi)
     y = f * sign(u[1]) * math.sin(phi)

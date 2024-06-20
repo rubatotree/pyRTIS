@@ -203,7 +203,7 @@ class PathTracerBRDFIS(RayTracer):
 
         # Sample the BRDF
         is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
-        # is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
+        is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
         is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
 
         if is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):

@@ -89,7 +89,8 @@ def scene_cornell_box() -> Scene:
     main_camera = Camera()
     main_camera.set_pos(vec3(0.0, 0.0, 4.0))
     main_camera.look_at(vec3(0.0, 0.0, 0.0))
-    skybox = SkyBox_NeonNight()
+    # skybox = SkyBox_NeonNight()
+    skybox = SkyBox_ColorFill(vec3(0.0))
     return Scene(obj_root, main_camera, skybox)
 
 def scene_cornell_box_cubemap() -> Scene:

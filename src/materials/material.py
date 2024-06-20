@@ -126,9 +126,9 @@ class SimpleDirectionalLight(Material):
         pdf = 1.0 / 4 / math.pi
         return self.back_albedo * pdf / (dot(rec.normal, wi) + 0.0001)
     def emission(self, wo:vec3, rec:HitRecord):
-        cosval = dot(self.normal, wo)
+        cosval = dot(self.normal.normalized(), wo.normalized())
         if cosval > 0:
-            le = self.irradiance * cosval
+            le = self.irradiance * cosval / math.pi
         else:
             le = vec3.zero()
         return le
