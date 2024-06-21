@@ -6,7 +6,7 @@ from scene_object.scene_object_group import *
 from materials.material import *
 from scene_object.skybox import *
 
-environment_as_light = True
+environment_as_light = False
 
 class Light(SceneObject):
     pass

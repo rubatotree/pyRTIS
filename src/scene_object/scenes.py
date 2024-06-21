@@ -34,7 +34,7 @@ def scene_skybox_test() -> Scene:
     obj_root = SceneObjectGroup()
     obj_root.append(Sphere(vec3(0.0), 0.5, SimpleMetal(vec3(1.00))))
     main_camera = Camera()
-    main_camera.set_pos(vec3(0.0, 0.0, 4.0))
+    main_camera.set_pos(vec3(0, 0, 4))
     main_camera.look_at(vec3(0.0, 0.0, 0.0))
     skybox = SkyBox_FromCubeMap("miramar")
     return Scene(obj_root, main_camera, skybox)
