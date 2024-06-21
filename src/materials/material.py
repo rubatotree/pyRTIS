@@ -15,6 +15,8 @@ class Material:
         return (vec3.zero(), vec3.zero(), 1.0)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         return vec3.zero()
+    def sample_pdf(self, wi:vec3, wo:vec3, rec:HitRecord) -> float:
+        return 0.0
 
 class SimpleLambertian(Material):
     albedo = vec3(1.0)
@@ -27,6 +29,11 @@ class SimpleLambertian(Material):
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         return self.albedo / math.pi
+    def sample_pdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+        costheta = dot(wi, rec.normal)
+        if costheta <= 0:
+            return 0.0
+        return random_hemisphere_surface_cosine_pdf(costheta)
 
 class SimpleMetal(Material):
     albedo = vec3(1.0)
@@ -45,19 +52,21 @@ class SimpleMetal(Material):
         fr = pdf * self.albedo / cosval
         return (fr, wi, pdf)
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
+        cosval = max(dot(wi, rec.normal), 0.0001)
+        fr = self.albedo * self.sample_pdf(wi, wo, rec) / cosval
+        return fr
+    def sample_pdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         if dot(wi, rec.normal) < 0 or dot(wo, rec.normal) < 0:
-            return vec3.zero()
+            return 0.0
         wi = wi.normalized()
         wo = wo.normalized()
         wo_ref = reflect(-wo, rec.normal).normalized()
         LdotV = dot(wo_ref, wi)
         if LdotV <= 0:
-            return vec3.zero()
+            return 0.0
         a2 = self.fuzz ** 2
         pdf = random_ggx_pdf(a2, LdotV)
-        cosval = max(dot(wi, rec.normal), 0.0001)
-        fr = self.albedo * pdf / cosval
-        return fr
+        return pdf
 
 class SimpleTransparent(Material):
     ref_idx = 1.5

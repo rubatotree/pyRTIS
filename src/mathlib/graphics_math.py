@@ -113,6 +113,9 @@ def random_hemisphere_surface_cosine(normal=vec3(0,1,0)):
     pdf = h / math.pi
     return (vec, pdf)
 
+def random_hemisphere_surface_cosine_pdf(costheta):
+    return costheta / math.pi
+
 def gamma_correction(col:vec3) -> vec3 :
     gamma = 1.0 / 2.2
     return vec3(col.e[0] ** gamma, col.e[1] ** gamma, col.e[2] ** gamma)

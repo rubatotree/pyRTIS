@@ -11,6 +11,8 @@ class SkyBox:
         return random_sphere_surface_uniform()
     def sample_radiance(self, direction:vec3) -> vec3:
         pass
+    def sample_pdf(self, direction):
+        return 1 / 4 / math.pi
 
 class SkyBox_ColorFill(SkyBox):
     color = vec3(0.0)
@@ -126,6 +128,13 @@ class SkyBox_FromCubeMap(SkyBox):
         sample_light_pdf = self.weights[img][y][x] / (4 * math.pi) / ((1 + u * u + v * v) ** 1.5) * 2
         # print(f"IMG {img} X {x} Y {y} PDF {sample_light_pdf} DIR {direction}")
         return direction, sample_light_pdf
+    
+    def sample_pdf(self, wi):
+        img, u, v = self.calc_uv(wi)
+        x = int(u * self.width)
+        y = int(v * self.height)
+        sample_light_pdf = self.weights[img][y][x] / (4 * math.pi) / ((1 + u * u + v * v) ** 1.5) * 2
+        return sample_light_pdf
 
     # left, right, bottom, top, forward, back
     def get_direction(self, img, x, y):
@@ -164,8 +173,8 @@ class SkyBox_FromCubeMap(SkyBox):
             img = 4
         u = u * 0.5 + 0.5
         v = v * 0.5 + 0.5
-        u = clamp(u, 0, 1)
-        v = clamp(v, 0, 1)
+        u = clamp(u, 0, 0.9999)
+        v = clamp(v, 0, 0.9999)
         return (img, u, v)
 
     def sample_radiance(self, direction:vec3):

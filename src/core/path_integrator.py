@@ -87,8 +87,8 @@ class PathTracerMIS(RayTracer):
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
                 direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
-                if isinstance(rec.material, SimpleMetal) and isinstance(light, DomeLight):
-                    print(f"\nLightIS sample {light}: {direct_light_is_lights_pdf}\nDirect Light: {direct_light_is_lights}\nEmission: {light_emission}\nfr: {fr}\n")
+                # if isinstance(rec.material, SimpleMetal) and isinstance(light, DomeLight):
+                    # print(f"\nLightIS sample {light}: {direct_light_is_lights_pdf}\nDirect Light: {direct_light_is_lights}\nEmission: {light_emission}\nfr: {fr}\n")
 
             # Sample the BRDF
             is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
@@ -99,17 +99,19 @@ class PathTracerMIS(RayTracer):
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
             
-                if isinstance(is_brdf_rec.material, SimpleSkybox) and isinstance(rec.material, SimpleMetal):
-                        print(f"\nBRDFIS sample: {direct_light_is_brdf_pdf}\nDirect Light: {direct_light_is_brdf}\nfr: {is_brdf_fr}\n")
+#                 if isinstance(is_brdf_rec.material, SimpleSkybox) and isinstance(rec.material, SimpleMetal):
+#                         print(f"\nBRDFIS sample: {direct_light_is_brdf_pdf}\nDirect Light: {direct_light_is_brdf}\nfr: {is_brdf_fr}\n")
 
             # MIS
             direct_light_is_lights_pdf = max(direct_light_is_lights_pdf, 0.0)
             direct_light_is_brdf_pdf = max(direct_light_is_brdf_pdf, 0.0)
-            sum_weight = (direct_light_is_lights_pdf + direct_light_is_brdf_pdf)
-            if sum_weight > 0:
-                w1 = direct_light_is_lights_pdf / sum_weight
-                w2 = direct_light_is_brdf_pdf / sum_weight
-                direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
+
+            direct_light_is_lights_pdf2 = rec.material.sample_pdf(wi_light, wo, rec)
+            direct_light_is_brdf_pdf2 = scene.light_list.sample_light_pdf(is_brdf_wi, rec)
+
+            w1 = direct_light_is_lights_pdf / (direct_light_is_lights_pdf + direct_light_is_lights_pdf2) 
+            w2 = direct_light_is_brdf_pdf / (direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2)
+            direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
 
         le = rec.material.emission(wo, rec)
         fr, wi, pdf = rec.material.sample(wo, rec)

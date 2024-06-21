@@ -9,7 +9,10 @@ from scene_object.skybox import *
 environment_as_light = True
 
 class Light(SceneObject):
-    pass
+    def sample_light(self, pos:vec3):
+        return (vec3(0.0), vec3(0.0), vec3(0.0), 0.0)
+    def sample_light_pdf(self, wi, rec):
+        return 0.0
 
 class LightList(SceneObjectGroup):
     def __init__(self):
@@ -20,6 +23,14 @@ class LightList(SceneObjectGroup):
         select_light_pdf = 1.0 / N
         light_id = int(math.floor(N * random_float()))
         return (self.obj_list[light_id], select_light_pdf)
+    def sample_light_pdf(self, wi, rec):
+        pdf = 0
+        N = len(self.obj_list)
+        for light in self.obj_list:
+            pdf += light.sample_light_pdf(wi, rec)
+        pdf /= N
+        return pdf
+
     def __len__(self):
         return len(self.obj_list)
 
@@ -86,6 +97,16 @@ class TriangleLight(Light):
             emission = self.irradiance / math.pi
         return (emission, direction, sampled_light_pos, sample_light_pdf)
 
+    def sample_light_pdf(self, wi, rec:HitRecord):
+        r = ray(rec.pos, wi)
+        rec = self.hit(r, 0.0001, math.inf)
+        if not rec.success:
+            return 0.0
+        cosval = dot(-r.direction, rec.normal)
+        sample_light_pdf = 1 / self.area * rec.dist * rec.dist / abs(cosval)
+        return sample_light_pdf
+
+# No Implement
 class SphereLight(Light):
     def __init__(self, origin:vec3, radius:float, radiance:vec3, use_irradiance=False):
         self.origin = origin
@@ -146,3 +167,5 @@ class DomeLight(Light):
         emission = self.skybox.sample_radiance(direction)
         sampled_light_pos = vec3(math.inf, math.inf, math.inf) * direction
         return (emission, direction, sampled_light_pos, sample_light_pdf)
+    def sample_light_pdf(self, wi, rec):
+        return self.skybox.sample_pdf(wi)
