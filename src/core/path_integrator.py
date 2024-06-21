@@ -67,7 +67,8 @@ class PathTracerMIS(RayTracer):
             else:
                 return vec3(0.0)
 
-        brdf_fail_rec = None
+        if depth > 0 and random_float() > p_russian_roulette:
+            return vec3(0.0)
 
         if len(scene.light_list) > 0:
             direct_light_is_lights = vec3(0.0)
@@ -80,51 +81,47 @@ class PathTracerMIS(RayTracer):
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
 
             sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
+            direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
+
             if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.0001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
-                direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
                 direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
+                if isinstance(rec.material, SimpleMetal) and isinstance(light, DomeLight):
+                    print(f"\nLightIS sample {light}: {direct_light_is_lights_pdf}\nDirect Light: {direct_light_is_lights}\nEmission: {light_emission}\nfr: {fr}\n")
 
             # Sample the BRDF
             is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
-            is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
             is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
-            if is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
-                direct_light_is_brdf_pdf = is_brdf_pdf
+            direct_light_is_brdf_pdf = is_brdf_pdf
+
+            if is_brdf_pdf > 0 and dot(is_brdf_wi, rec.normal) > 0 and is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
-            else:
-                brdf_fail_rec = is_brdf_rec
+            
+                if isinstance(is_brdf_rec.material, SimpleSkybox) and isinstance(rec.material, SimpleMetal):
+                        print(f"\nBRDFIS sample: {direct_light_is_brdf_pdf}\nDirect Light: {direct_light_is_brdf}\nfr: {is_brdf_fr}\n")
 
             # MIS
-            # direct_light_is_lights_pdf = 0.0
-            # direct_light_is_brdf_pdf = 0.0
+            direct_light_is_lights_pdf = max(direct_light_is_lights_pdf, 0.0)
+            direct_light_is_brdf_pdf = max(direct_light_is_brdf_pdf, 0.0)
             sum_weight = (direct_light_is_lights_pdf + direct_light_is_brdf_pdf)
             if sum_weight > 0:
-                direct_light = (direct_light_is_lights_pdf * direct_light_is_lights + direct_light_is_brdf_pdf * direct_light_is_brdf) / sum_weight
+                w1 = direct_light_is_lights_pdf / sum_weight
+                w2 = direct_light_is_brdf_pdf / sum_weight
+                direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
 
-        if depth > 0 and random_float() > p_russian_roulette:
-            return direct_light
-        
         le = rec.material.emission(wo, rec)
-
-        if len(scene.light_list) > 0:
-            fr, wi, pdf = is_brdf_fr, is_brdf_wi, is_brdf_pdf
-
-        if brdf_fail_rec == None:
-            fr, wi, pdf = rec.material.sample(wo, rec)
-            fr = rec.material.bsdf(wi, wo, rec)
-
+        fr, wi, pdf = rec.material.sample(wo, rec)
         cosval = max(dot(wi, rec.normal), 0.0001)
             
         if fr.norm() < 0.000001 or wi.norm() < 0.00001:
             global_light = le
         else:
-            li = self.shade(ray(rec.pos, wi), scene, depth + 1, brdf_fail_rec)
+            li = self.shade(ray(rec.pos, wi), scene, depth + 1, None)
             global_light = le + li * fr * cosval / pdf
-
         return direct_light + global_light
+
     def ray_color(self, r, scene):
         return self.shade(r, scene, 0)
 
@@ -144,6 +141,9 @@ class PathTracerLightsIS(RayTracer):
                 return scene.skybox.sample(direction)
             else:
                 return vec3(0.0)
+        
+        if depth > 0 and random_float() > p_russian_roulette:
+            return vec3(0.0)
 
         if len(scene.light_list) > 0:
             direct_light_is_lights = vec3(0.0)
@@ -161,9 +161,6 @@ class PathTracerLightsIS(RayTracer):
 
             direct_light = direct_light_is_lights
 
-        if depth > 0 and random_float() > p_russian_roulette:
-            return direct_light
-        
         le = rec.material.emission(wo, rec)
         fr, wi, pdf = rec.material.sample(wo, rec)
         fr = rec.material.bsdf(wi, wo, rec)
@@ -184,8 +181,7 @@ class PathTracerBRDFIS(RayTracer):
         direct_light = vec3(0.0)
         global_light = vec3(0.0)
 
-        if rec == None:
-            rec = scene.hit(r, 0.0001, math.inf)
+        rec = scene.hit(r, 0.0001, math.inf)
 
         direction = r.direction.normalized()
         wo = -direction
@@ -198,41 +194,32 @@ class PathTracerBRDFIS(RayTracer):
             else:
                 return vec3(0.0)
 
-        brdf_fail_rec = None
+        if depth > 0 and random_float() > p_russian_roulette:
+            return vec3(0.0)
+
         direct_light_is_brdf = vec3(0.0)
         direct_light_is_brdf_pdf = 0.0
 
         # Sample the BRDF
         is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
-        is_brdf_fr = rec.material.bsdf(is_brdf_wi, wo, rec)
         is_brdf_rec = scene.hit(ray(rec.pos, is_brdf_wi), 0.0001, math.inf)
 
-        if is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
+        if is_brdf_pdf > 0 and dot(is_brdf_wi, rec.normal) > 0 and is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
             direct_light_is_brdf_pdf = is_brdf_pdf
             cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
             direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
-        else:
-            brdf_fail_rec = is_brdf_rec
         direct_light = direct_light_is_brdf
 
-        if depth > 0 and random_float() > p_russian_roulette:
-            return direct_light
-        
         le = rec.material.emission(wo, rec)
-        fr, wi, pdf = is_brdf_fr, is_brdf_wi, is_brdf_pdf
-
-        if brdf_fail_rec == None:
-            fr, wi, pdf = rec.material.sample(wo, rec)
-            fr = rec.material.bsdf(wi, wo, rec)
-
+        fr, wi, pdf = rec.material.sample(wo, rec)
         cosval = max(dot(wi, rec.normal), 0.0001)
             
         if fr.norm() < 0.000001 or wi.norm() < 0.00001:
             global_light = le
         else:
-            li = self.shade(ray(rec.pos, wi), scene, depth + 1, brdf_fail_rec)
+            li = self.shade(ray(rec.pos, wi), scene, depth + 1, None)
             global_light = le + li * fr * cosval / pdf
-
         return direct_light + global_light
+
     def ray_color(self, r, scene):
         return self.shade(r, scene, 0)

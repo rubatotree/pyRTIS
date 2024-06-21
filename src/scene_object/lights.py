@@ -6,7 +6,7 @@ from scene_object.scene_object_group import *
 from materials.material import *
 from scene_object.skybox import *
 
-environment_as_light = False
+environment_as_light = True
 
 class Light(SceneObject):
     pass
@@ -78,12 +78,11 @@ class TriangleLight(Light):
         direction = (sampled_light_pos - pos).normalized()
         dist = (sampled_light_pos - pos).norm()
         cosval = dot(-direction, normal)
+        sample_light_pdf = 1 / self.area * dist * dist / abs(cosval)
         if cosval <= 0:
             success = False 
-            sample_light_pdf = 1.0
             emission = vec3(0.0)
         else:
-            sample_light_pdf = 1 / self.area * dist * dist / cosval
             emission = self.irradiance / math.pi
         return (emission, direction, sampled_light_pos, sample_light_pdf)
 

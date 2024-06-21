@@ -110,7 +110,7 @@ def main():
     if do_test:
         print("Reading Baseline...")
         baseline = read_nogamma("./data/baseline_nogamma.txt")
-        integrators = [PathTracerLightsIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
+        integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
         names = ["MIS", "LightsIS", "CosineIS", "BRDFIS"]
         colors = ['red', 'blue', 'black', 'green']
 
