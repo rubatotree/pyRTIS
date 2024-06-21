@@ -30,6 +30,7 @@ scenes=dict()
 scenes["cornell"]=scene_cornell_box
 scenes["cornell_ao"]=scene_cornell_ao
 scenes["cornell_light"]=scene_cornell_Light
+scenes["cornell_nospecular"]=scene_cornell_box_no_specular
 scenes["cornell_cubemap"]=scene_cornell_box_cubemap
 scenes["material"]=scene_skybox_test
 scenes["mis"]=scene_mis
@@ -150,7 +151,7 @@ def main():
         print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
     else:
         start_time = time.time()
-        renderer_core = RendererCore(PathTracerMIS(), main_scene, width, height, output_filename, baseline, do_test)
+        renderer_core = RendererCore(PathTracerLightsIS(), main_scene, width, height, output_filename, baseline, do_test)
         renderer = None
         if vh_num > 0:
             renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)

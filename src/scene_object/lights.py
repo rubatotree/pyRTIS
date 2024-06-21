@@ -164,7 +164,7 @@ class DomeLight(Light):
         return HitRecord.inf() 
     def sample_light(self, pos:vec3):
         direction, sample_light_pdf = self.skybox.sample_dir()
-        emission = self.skybox.sample_radiance(direction)
+        emission = self.skybox.sample(direction)
         sampled_light_pos = vec3(math.inf, math.inf, math.inf) * direction
         return (emission, direction, sampled_light_pos, sample_light_pdf)
     def sample_light_pdf(self, wi, rec):

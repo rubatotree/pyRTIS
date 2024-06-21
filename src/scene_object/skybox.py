@@ -9,8 +9,6 @@ class SkyBox:
         pass
     def sample_dir(self) -> vec3:
         return random_sphere_surface_uniform()
-    def sample_radiance(self, direction:vec3) -> vec3:
-        pass
     def sample_pdf(self, direction):
         return 1 / 4 / math.pi
 
@@ -20,20 +18,14 @@ class SkyBox_ColorFill(SkyBox):
         self.color = color
     def sample(self, direction:vec3) -> vec3:
         return self.color
-    def sample_radiance(self, direction:vec3) -> vec3:
-        return self.color
 
 class SkyBox_OneWeekend(SkyBox):
     def sample(self, direction:vec3) -> vec3:
         return lerp(vec3(1.0), vec3(0.4, 0.6, 1.0), 0.5 * (direction.y() + 1.0) * 0.8 + 0.2)
-    def sample_radiance(self, direction:vec3) -> vec3:
-        return self.color
 
 class SkyBox_NeonNight(SkyBox):
     def sample(self, direction:vec3) -> vec3:
         return lerp(vec3(0.8, 0.0, 0.32), vec3(0.05, 0.0, 0.1), (direction.y() * 0.5 + 0.5) ** 0.5)
-    def sample_radiance(self, direction:vec3) -> vec3:
-        return self.color
 
 # left, right, bottom, top, forward, back
 cubemap_filenames = [["negx", "posx", "negy", "posy", "negz", "posz"]]
@@ -176,14 +168,6 @@ class SkyBox_FromCubeMap(SkyBox):
         u = clamp(u, 0, 0.9999)
         v = clamp(v, 0, 0.9999)
         return (img, u, v)
-
-    def sample_radiance(self, direction:vec3):
-        img, u, v = self.calc_uv(direction)
-        pixel_u = int(u * (self.width - 0.0001))
-        pixel_v = int(v * (self.height - 0.0001))
-        col = self.images[img][pixel_v][pixel_u]
-        radiance = col
-        return radiance
 
     def sample(self, direction:vec3):
         img, u, v = self.calc_uv(direction)
