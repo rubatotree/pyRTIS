@@ -15,6 +15,7 @@ class Scene:
         self.domelight = DomeLight(skybox)
         self.base_list = object_root.get_objects()
         self.light_list = LightList()
+        self.light_list.domelight = self.domelight
         for obj in self.base_list:
             if isinstance(obj, Light):
                 self.light_list.append(obj)
@@ -25,7 +26,7 @@ class Scene:
         if rec_temp.success:
             return rec_temp
         else:
-            rec = HitRecord(vec3(math.inf) * r.direction, -r.direction, math.inf, success=False)
+            rec = HitRecord(vec3(math.inf) * r.direction, -r.direction, math.inf, success=False, obj=self.domelight)
             rec.material = self.domelight.material
             rec.isLight = True
             return rec

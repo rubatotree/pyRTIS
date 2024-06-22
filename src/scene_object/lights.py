@@ -13,10 +13,13 @@ class Light(SceneObject):
         return (vec3(0.0), vec3(0.0), vec3(0.0), 0.0)
     def sample_light_pdf(self, wi, rec):
         return 0.0
+    def sample_light_emission(self, wi, rec_sample, rec_self):
+        return vec3(0.0)
 
 class LightList(SceneObjectGroup):
     def __init__(self):
         self.obj_list = []
+        self.domelight = None
         pass
     def choose_uniform(self):
         N = len(self.obj_list)
@@ -28,9 +31,22 @@ class LightList(SceneObjectGroup):
         N = len(self.obj_list)
         for light in self.obj_list:
             pdf += light.sample_light_pdf(wi, rec)
+        # hitrec = self.hit(ray(rec.pos, wi), 0.0001, math.inf)
+        # if not hitrec.success:
+        #     pdf = self.domelight.sample_light_pdf(wi, rec)
+        # else:
+        #     pdf = hitrec.obj.sample_light_pdf(wi, rec)
         pdf /= N
         return pdf
-
+    def sample_light_emission(self, wi, rec_sample, rec_self=None):
+        emission = vec3(0.0)
+        if rec_self == None:
+            rec_self = self.hit(ray(rec_sample.pos, wi), 0.0001, math.inf)
+        if not rec_self.success:
+            emission = self.domelight.sample_light_emission(wi, rec_sample, rec_self)
+        else:
+            emission = rec_self.obj.sample_light_emission(wi, rec_sample, rec_self)
+        return emission
     def __len__(self):
         return len(self.obj_list)
 
@@ -72,6 +88,7 @@ class TriangleLight(Light):
                 normal = -normal
             rec = HitRecord(pos, normal, t, front_face, self.material, True)
             rec.isLight = True
+            rec.obj = self
             return rec
         else:
             return HitRecord.inf()
@@ -99,12 +116,20 @@ class TriangleLight(Light):
 
     def sample_light_pdf(self, wi, rec:HitRecord):
         r = ray(rec.pos, wi)
-        rec = self.hit(r, 0.0001, math.inf)
-        if not rec.success:
+        hitrec = self.hit(r, 0.0001, math.inf)
+        if not hitrec.success:
             return 0.0
-        cosval = dot(-r.direction, rec.normal)
-        sample_light_pdf = 1 / self.area * rec.dist * rec.dist / abs(cosval)
+        cosval = dot(-r.direction, hitrec.normal)
+        sample_light_pdf = 1 / self.area * hitrec.dist * hitrec.dist / abs(cosval)
         return sample_light_pdf
+
+    def sample_light_emission(self, wi, rec_sample, rec_self=None):
+        emission = vec3(0.0)
+        if rec_self == None:
+            rec_self = self.hit(ray(rec_sample.pos, wi), 0.0001, math.inf)
+        if rec_self.front_face:
+            emission = self.irradiance / math.pi
+        return emission
 
 # No Implement
 class SphereLight(Light):
@@ -112,10 +137,10 @@ class SphereLight(Light):
         self.origin = origin
         self.radius = radius
         self.area = math.pi * 4 * self.radius * self.radius
-        self.material = SimpleLight(radiance / self.area)
         self.radiance = radiance
         if use_irradiance:
             self.radiance = radiance * self.area
+        self.material = SimpleLight(self.radiance / self.area)
         self.irradiance = self.radiance / self.area
     def hit(self, r:ray, t_min:float, t_max:float):
         oc = r.origin - self.origin
@@ -123,7 +148,7 @@ class SphereLight(Light):
         half_b = dot(oc, r.direction)
         c = oc.norm_sqr() - self.radius * self.radius
         delta = half_b * half_b - a * c
-        if delta < 0:
+        if delta <= 0:
             return HitRecord.inf()
         else:
             root = math.sqrt(delta)
@@ -132,29 +157,65 @@ class SphereLight(Light):
                 pos = r.at(tmp)
                 rec = HitRecord(pos, (pos - self.origin).normalized(), tmp, True, self.material, True)
                 rec.isLight = True
+                rec.obj = self
                 return rec
             tmp = (-half_b + root) / a
             if tmp < t_max and tmp > t_min:
                 pos = r.at(tmp)
                 rec = HitRecord(pos, -(pos - self.origin).normalized(), tmp, False, self.material, True)
                 rec.isLight = True
+                rec.obj = self
                 return rec
         return HitRecord.inf() 
     def sample_light(self, pos:vec3):
         center_dir = (pos - self.origin).normalized()
-
-        sample_dir, sample_pos_pdf = random_hemisphere_surface_uniform(center_dir)
+        sample_dir, sample_pos_pdf = random_hemisphere_surface_cosine(center_dir)
         sampled_light_pos = self.origin + sample_dir * self.radius
         direction = (sampled_light_pos - pos).normalized()
         cosval = dot(-direction, sample_dir)
         dist = (pos - sampled_light_pos).norm()
         if cosval <= 0:
             emission = vec3(0.0)
-            sample_light_pdf = 0.0
         else:
             emission = self.irradiance / math.pi
-            sample_light_pdf = sample_pos_pdf / self.radius / self.radius / cosval * dist * dist
+        sample_light_pdf = sample_pos_pdf / self.radius / self.radius / max(abs(cosval), 0.00001) * dist * dist
         return (emission, direction, sampled_light_pos, sample_light_pdf)
+    def sample_light_pdf(self, wi, rec):
+        center_dir = (rec.pos - self.origin).normalized()
+        r = ray(rec.pos, wi)
+        oc = r.origin - self.origin
+        a = r.direction.norm_sqr()
+        half_b = dot(oc, r.direction)
+        c = oc.norm_sqr() - self.radius * self.radius
+        delta = half_b * half_b - a * c
+        dist = [self.origin, self.origin]
+        if delta <= 0:
+            return 0.0
+        else:
+            root = math.sqrt(delta)
+            dist[0] = (-half_b - root) / a
+            dist[1] = (-half_b + root) / a
+        
+        sample_light_pdf = 0.0
+        for i in range(2):
+            if dist[i] <= 0:
+                continue
+            pos = r.at(dist[i])
+            sample_dir = (pos - self.origin).normalized()
+            cosval = dot(-r.direction, sample_dir)
+            sample_pos_pdf = dot(center_dir, sample_dir) / math.pi
+            if sample_pos_pdf > 0:
+                sample_light_pdf += sample_pos_pdf / self.radius / self.radius / max(abs(cosval), 0.00001) * dist[i] * dist[i]
+
+        return sample_light_pdf
+
+    def sample_light_emission(self, wi, rec_sample, rec_self=None):
+        emission = vec3(0.0)
+        if rec_self == None:
+            rec_self = self.hit(ray(rec_sample.pos, wi), 0.0001, math.inf)
+        if rec_self.front_face:
+            emission = self.irradiance / math.pi
+        return emission
 
 class DomeLight(Light):
     def __init__(self, skybox:SkyBox):
@@ -169,3 +230,5 @@ class DomeLight(Light):
         return (emission, direction, sampled_light_pos, sample_light_pdf)
     def sample_light_pdf(self, wi, rec):
         return self.skybox.sample_pdf(wi)
+    def sample_light_emission(self, wi, rec_sample, rec_self=None):
+        emission = self.skybox.sample(wi)

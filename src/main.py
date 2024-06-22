@@ -38,7 +38,7 @@ scenes["mis"]=scene_mis
 scenes["oneweekend"]=scene_one_weekend
 
 def read_args():
-    global output_filename, width, height, spp, thread_num, backup_num, output_gif, use_pillow, compress_output, time_limit, scene_name, vh_num, do_test
+    global output_filename, width, height, spp, thread_num, backup_num, output_gif, use_pillow, compress_output, time_limit, scene_name, vh_num, do_test, reference
     argc = len(sys.argv)
     for i in range(argc):
         if sys.argv[i] == "-gif":
@@ -116,7 +116,7 @@ def main():
     baseline = None
 
     if do_test:
-        print("Reading Reference...")
+        print(f"Reading Reference f{reference}...")
         baseline = read_nogamma(reference)
         integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
         names = ["MIS", "LightsIS", "CosineIS", "BRDFIS"]
@@ -162,7 +162,7 @@ def main():
         print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_error_fig.jpg')
     else:
         start_time = time.time()
-        renderer_core = RendererCore(PathTracerLightsIS(), main_scene, width, height, output_filename, baseline, do_test)
+        renderer_core = RendererCore(PathTracerMIS(), main_scene, width, height, output_filename, baseline, do_test)
         renderer = None
         if vh_num > 0:
             renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)

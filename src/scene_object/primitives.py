@@ -22,11 +22,11 @@ class Sphere(SceneObject):
             tmp = (-half_b - root) / a
             if tmp < t_max and tmp > t_min:
                 pos = r.at(tmp)
-                return HitRecord(pos, (pos - self.origin).normalized(), tmp, True, self.material, True)
+                return HitRecord(pos, (pos - self.origin).normalized(), tmp, True, self.material, True, obj=self)
             tmp = (-half_b + root) / a
             if tmp < t_max and tmp > t_min:
                 pos = r.at(tmp)
-                return HitRecord(pos, -(pos - self.origin).normalized(), tmp, False, self.material, True)
+                return HitRecord(pos, -(pos - self.origin).normalized(), tmp, False, self.material, True, obj=self)
         return HitRecord.inf() 
 
 class Triangle(SceneObject):
@@ -59,7 +59,7 @@ class Triangle(SceneObject):
             front_face = dot(normal, r.direction) < 0
             if not front_face:
                 normal = -normal
-            return HitRecord(pos, normal, t, front_face, self.material, True)
+            return HitRecord(pos, normal, t, front_face, self.material, True, obj=self)
         else:
             return HitRecord.inf()
 

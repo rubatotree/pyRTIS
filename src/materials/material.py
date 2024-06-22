@@ -56,8 +56,6 @@ class SimpleMetal(Material):
         fr = self.albedo * self.sample_pdf(wi, wo, rec) / cosval
         return fr
     def sample_pdf(self, wi:vec3, wo:vec3, rec:HitRecord):
-        if dot(wi, rec.normal) < 0 or dot(wo, rec.normal) < 0:
-            return 0.0
         wi = wi.normalized()
         wo = wo.normalized()
         wo_ref = reflect(-wo, rec.normal).normalized()
@@ -141,11 +139,7 @@ class SimpleLight(Material):
     def bsdf(self, wi:vec3, wo:vec3, rec:HitRecord):
         return vec3(0.0)
     def emission(self, wo:vec3, rec:HitRecord):
-        cosval = dot(self.normal, wo)
-        if cosval > 0:
-            le = self.irradiance / math.pi
-        else:
-            le = vec3.zero()
+        le = self.irradiance / math.pi
         return le
 
 class SimpleSkybox(Material):

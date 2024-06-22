@@ -75,20 +75,22 @@ class PathTracerMIS(RayTracer):
             direct_light_is_lights_pdf = 0.0
             direct_light_is_brdf   = vec3(0.0)
             direct_light_is_brdf_pdf = 0.0
+            lights_success = False
+            brdf_success = False
 
             # Sample the Lights
             light, select_light_pdf = scene.light_list.choose_uniform()
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
 
             sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-            direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
+            direct_light_is_lights_pdf = scene.light_list.sample_light_pdf(wi_light, rec)
 
-            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.0001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
+            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and sample_light_rec.isLight:
+                light_emission = sample_light_rec.material.emission(-wi_light, sample_light_rec)
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
                 direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
-                # if isinstance(rec.material, SimpleMetal) and isinstance(light, DomeLight):
-                    # print(f"\nLightIS sample {light}: {direct_light_is_lights_pdf}\nDirect Light: {direct_light_is_lights}\nEmission: {light_emission}\nfr: {fr}\n")
+                lights_success = True
 
             # Sample the BRDF
             is_brdf_fr, is_brdf_wi, is_brdf_pdf = rec.material.sample(wo, rec)
@@ -98,20 +100,25 @@ class PathTracerMIS(RayTracer):
             if is_brdf_pdf > 0 and dot(is_brdf_wi, rec.normal) > 0 and is_brdf_rec.isLight and not ((not environment_as_light) and not is_brdf_rec.success):
                 cosval = max(dot(is_brdf_wi, rec.normal), 0.0001)
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
+                brdf_success = True
             
-#                 if isinstance(is_brdf_rec.material, SimpleSkybox) and isinstance(rec.material, SimpleMetal):
-#                         print(f"\nBRDFIS sample: {direct_light_is_brdf_pdf}\nDirect Light: {direct_light_is_brdf}\nfr: {is_brdf_fr}\n")
+            if lights_success and brdf_success:
+                # MIS
+                direct_light_is_lights_pdf = max(direct_light_is_lights_pdf, 0.0)
+                direct_light_is_brdf_pdf = max(direct_light_is_brdf_pdf, 0.0)
 
-            # MIS
-            direct_light_is_lights_pdf = max(direct_light_is_lights_pdf, 0.0)
-            direct_light_is_brdf_pdf = max(direct_light_is_brdf_pdf, 0.0)
+                direct_light_is_lights_pdf2 = rec.material.sample_pdf(wi_light, wo, rec)
+                direct_light_is_brdf_pdf2 = scene.light_list.sample_light_pdf(is_brdf_wi, rec)
 
-            direct_light_is_lights_pdf2 = rec.material.sample_pdf(wi_light, wo, rec)
-            direct_light_is_brdf_pdf2 = scene.light_list.sample_light_pdf(is_brdf_wi, rec)
-
-            w1 = direct_light_is_lights_pdf / (direct_light_is_lights_pdf + direct_light_is_lights_pdf2) 
-            w2 = direct_light_is_brdf_pdf / (direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2)
-            direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
+                w1 = 0
+                w2 = 0
+                if direct_light_is_lights_pdf + direct_light_is_lights_pdf2 > 0:
+                    w1 = direct_light_is_lights_pdf / (direct_light_is_lights_pdf + direct_light_is_lights_pdf2) 
+                if direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2 > 0:
+                    w2 = direct_light_is_brdf_pdf / (direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2)
+                direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
+            else:
+                direct_light = direct_light_is_lights + direct_light_is_brdf
 
         le = rec.material.emission(wo, rec)
         fr, wi, pdf = rec.material.sample(wo, rec)
@@ -153,12 +160,13 @@ class PathTracerLightsIS(RayTracer):
 
             light, select_light_pdf = scene.light_list.choose_uniform()
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
+            direct_light_is_lights_pdf = scene.light_list.sample_light_pdf(wi_light, rec)
 
             sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
-            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and ((sample_light_rec.pos - light_pos).norm() < 0.001 or (isinstance(light, DomeLight) and not sample_light_rec.success)):
+            if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and sample_light_rec.isLight:
+                light_emission = sample_light_rec.material.emission(-wi_light, sample_light_rec)
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
-                direct_light_is_lights_pdf = select_light_pdf * sample_light_pdf
                 direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
 
             direct_light = direct_light_is_lights

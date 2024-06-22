@@ -30,7 +30,7 @@ def reflect(v:vec3, n:vec3):
 def refract(wo:vec3, n:vec3, etai_over_etat:float):
     cosTheta = dot(wo, n)
     r_out_parallel = etai_over_etat * (-wo + cosTheta * n)
-    r_out_perp = -math.sqrt(1.0 - r_out_parallel.norm_sqr()) * n;
+    r_out_perp = -math.sqrt(1.0 - r_out_parallel.norm_sqr()) * n
     return r_out_parallel + r_out_perp
 
 def schlick(cosine:float, ref_idx:float):

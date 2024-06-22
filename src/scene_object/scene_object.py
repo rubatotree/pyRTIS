@@ -6,6 +6,7 @@ from abc import abstractmethod
 import math
 
 class HitRecord:
+    obj = None
     success = False
     pos = vec3.zero()
     normal = vec3.zero()
@@ -13,7 +14,8 @@ class HitRecord:
     front_face = False
     material = None
     isLight = False
-    def __init__(self, pos=vec3.zero(), normal=vec3.zero(), dist=math.inf, front_face=False, material=None, success=True):
+    def __init__(self, pos=vec3.zero(), normal=vec3.zero(), dist=math.inf, front_face=False, material=None, success=True, obj=None):
+        self.obj = None
         self.pos = pos
         self.normal = normal
         self.dist = dist
