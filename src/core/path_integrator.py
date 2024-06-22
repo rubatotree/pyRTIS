@@ -34,7 +34,6 @@ class PathTracerCosineIS(RayTracer):
         
         le = rec.material.emission(wo, rec)
         wi, pdf = random_hemisphere_surface_cosine(rec.normal)
-        # fr, wi, pdf = rec.material.sample(wo, rec)
         fr = rec.material.bsdf(wi, wo, rec)
         cosval = max(dot(wi, rec.normal), 0.0001)
             
@@ -81,10 +80,8 @@ class PathTracerMIS(RayTracer):
             # Sample the Lights
             light, select_light_pdf = scene.light_list.choose_uniform()
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
-
-            sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
             direct_light_is_lights_pdf = scene.light_list.sample_light_pdf(wi_light, rec)
-
+            sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
             if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and sample_light_rec.isLight:
                 light_emission = sample_light_rec.material.emission(-wi_light, sample_light_rec)
                 fr = rec.material.bsdf(wi_light, wo, rec)
@@ -102,23 +99,16 @@ class PathTracerMIS(RayTracer):
                 direct_light_is_brdf = is_brdf_rec.material.emission(-is_brdf_wi, is_brdf_rec) * is_brdf_fr * cosval / direct_light_is_brdf_pdf
                 brdf_success = True
             
-            if lights_success and brdf_success:
-                # MIS
-                direct_light_is_lights_pdf = max(direct_light_is_lights_pdf, 0.0)
-                direct_light_is_brdf_pdf = max(direct_light_is_brdf_pdf, 0.0)
-
-                direct_light_is_lights_pdf2 = rec.material.sample_pdf(wi_light, wo, rec)
-                direct_light_is_brdf_pdf2 = scene.light_list.sample_light_pdf(is_brdf_wi, rec)
-
-                w1 = 0
-                w2 = 0
-                if direct_light_is_lights_pdf + direct_light_is_lights_pdf2 > 0:
-                    w1 = direct_light_is_lights_pdf / (direct_light_is_lights_pdf + direct_light_is_lights_pdf2) 
-                if direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2 > 0:
-                    w2 = direct_light_is_brdf_pdf / (direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2)
-                direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
-            else:
-                direct_light = direct_light_is_lights + direct_light_is_brdf
+            # MIS
+            direct_light_is_lights_pdf2 = rec.material.sample_pdf(wi_light, wo, rec)
+            direct_light_is_brdf_pdf2 = scene.light_list.sample_light_pdf(is_brdf_wi, rec)
+            w1 = 0
+            w2 = 0
+            if direct_light_is_lights_pdf + direct_light_is_lights_pdf2 > 0:
+                w1 = direct_light_is_lights_pdf / (direct_light_is_lights_pdf + direct_light_is_lights_pdf2) 
+            if direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2 > 0:
+                w2 = direct_light_is_brdf_pdf / (direct_light_is_brdf_pdf + direct_light_is_brdf_pdf2)
+            direct_light = w1 * direct_light_is_lights + w2 * direct_light_is_brdf
 
         le = rec.material.emission(wo, rec)
         fr, wi, pdf = rec.material.sample(wo, rec)
@@ -161,7 +151,6 @@ class PathTracerLightsIS(RayTracer):
             light, select_light_pdf = scene.light_list.choose_uniform()
             light_emission, wi_light, light_pos, sample_light_pdf = light.sample_light(rec.pos)
             direct_light_is_lights_pdf = scene.light_list.sample_light_pdf(wi_light, rec)
-
             sample_light_rec = scene.hit(ray(rec.pos, wi_light), 0.0001, math.inf)
             if sample_light_pdf > 0 and dot(wi_light, rec.normal) > 0 and sample_light_rec.isLight:
                 light_emission = sample_light_rec.material.emission(-wi_light, sample_light_rec)
