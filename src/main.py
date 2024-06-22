@@ -127,7 +127,7 @@ def main():
         plt.title("Error-SPP map", fontsize=12)
         plt.xlabel('spp', fontsize=10)
         plt.ylabel('Error', fontsize=10)
-        # plt.ylim((0, 0.15))
+
         for i in range(len(integrators)):
             print(f"Testing {names[i]}...\n")
             renderer_core = RendererCore(integrators[i], main_scene, width, height, output_filename, baseline, do_test)
@@ -149,6 +149,10 @@ def main():
                 time_array.append(data.time)
                 energy_array.append(data.energy)
             datafile.close()
+
+            if i == 0:      # MIS
+                plt.ylim((0, energy_array[0]))
+
             X = np.array(spp_array)
             Y = np.array(energy_array)
             plt.plot(X, Y, color=colors[i], label=names[i])
