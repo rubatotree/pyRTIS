@@ -25,6 +25,7 @@ time_limit = -1
 scene_name = "cornell"
 vh_num = -1
 do_test = False
+reference = "./data/cornell_cubemap_ref.txt"
 
 scenes=dict()
 scenes["cornell"]=scene_cornell_box
@@ -92,6 +93,12 @@ def read_args():
                     scene_name = scene_name_tmp
                 else:
                     print("Error: Scene not exist")
+            elif sys.argv[i] == "-ref":
+                ref_tmp = str(sys.argv[i + 1])
+                if os.path.exists(ref_tmp):
+                    reference = ref_tmp
+                else:
+                    print("Error: Reference File not exist")
 
 def main():
     read_args()
@@ -109,18 +116,18 @@ def main():
     baseline = None
 
     if do_test:
-        print("Reading Baseline...")
-        baseline = read_nogamma("./data/baseline_nogamma.txt")
+        print("Reading Reference...")
+        baseline = read_nogamma(reference)
         integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
         names = ["MIS", "LightsIS", "CosineIS", "BRDFIS"]
         colors = ['red', 'blue', 'black', 'green']
 
         plt.rcParams.update({"font.size":8})
         # plt.figure(figsize=(6, 8))
-        plt.title("Energy-SPP map", fontsize=12)
+        plt.title("Error-SPP map", fontsize=12)
         plt.xlabel('spp', fontsize=10)
-        plt.ylabel('Energy', fontsize=10)
-        plt.ylim((0, 0.15))
+        plt.ylabel('Error', fontsize=10)
+        # plt.ylim((0, 0.15))
         for i in range(len(integrators)):
             print(f"Testing {names[i]}...\n")
             renderer_core = RendererCore(integrators[i], main_scene, width, height, output_filename, baseline, do_test)
@@ -147,8 +154,8 @@ def main():
             plt.plot(X, Y, color=colors[i], label=names[i])
 
         plt.legend(loc='best')
-        plt.savefig(f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
-        print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_energy_fig.jpg')
+        plt.savefig(f'./output/{output_filename}/{output_filename}_error_fig.jpg')
+        print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_error_fig.jpg')
     else:
         start_time = time.time()
         renderer_core = RendererCore(PathTracerLightsIS(), main_scene, width, height, output_filename, baseline, do_test)
