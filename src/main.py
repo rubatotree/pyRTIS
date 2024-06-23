@@ -26,6 +26,7 @@ scene_name = "cornell"
 vh_num = -1
 do_test = False
 reference = "./data/cornell_cubemap_ref.txt"
+integrator = 0
 
 scenes=dict()
 scenes["cornell"]=scene_cornell_box
@@ -36,9 +37,10 @@ scenes["cornell_cubemap"]=scene_cornell_box_cubemap
 scenes["material"]=scene_skybox_test
 scenes["mis"]=scene_mis
 scenes["oneweekend"]=scene_one_weekend
+integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
 
 def read_args():
-    global output_filename, width, height, spp, thread_num, backup_num, output_gif, use_pillow, compress_output, time_limit, scene_name, vh_num, do_test, reference
+    global output_filename, width, height, spp, thread_num, backup_num, output_gif, use_pillow, compress_output, time_limit, scene_name, vh_num, do_test, reference, integrator
     argc = len(sys.argv)
     for i in range(argc):
         if sys.argv[i] == "-gif":
@@ -55,6 +57,14 @@ def read_args():
             compress_output = False
         elif sys.argv[i] == "-test":
             do_test = True
+        elif sys.argv[i] == "-mis":
+            integrator = 0
+        elif sys.argv[i] == "-lightsis":
+            integrator = 1
+        elif sys.argv[i] == "-cosineis":
+            integrator = 2
+        elif sys.argv[i] == "-brdfis":
+            integrator = 3
         elif i < argc - 1:
             if sys.argv[i] == "-o":
                 output_filename = str(sys.argv[i + 1])
@@ -118,7 +128,6 @@ def main():
     if do_test:
         print(f"Reading Reference f{reference}...")
         baseline = read_nogamma(reference)
-        integrators = [PathTracerMIS(), PathTracerLightsIS(), PathTracerCosineIS(), PathTracerBRDFIS()]
         names = ["MIS", "LightsIS", "CosineIS", "BRDFIS"]
         colors = ['red', 'blue', 'black', 'green']
 
@@ -162,7 +171,7 @@ def main():
         print(f'\nSaved Plot to', f'./output/{output_filename}/{output_filename}_error_fig.jpg')
     else:
         start_time = time.time()
-        renderer_core = RendererCore(PathTracerMIS(), main_scene, width, height, output_filename, baseline, do_test)
+        renderer_core = RendererCore(integrators[integrator], main_scene, width, height, output_filename, baseline, do_test)
         renderer = None
         if vh_num > 0:
             renderer = RendererVarianceHeuristic(renderer_core, spp, vh_num, thread_num, backup_num, use_pillow, output_gif, compress_output)

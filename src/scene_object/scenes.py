@@ -250,7 +250,7 @@ def scene_mis() -> Scene:
     theta_max = theta_min + theta_range
     radius = 1.0
     width = 2.0
-    fuzz_list = [1, 0.5, 0.1, 0.0]
+    fuzz_list = [1, 0.5, 0.1, 0.01]
     for i in range(4):
         fuzz = fuzz_list[i]
         theta_min_i = theta_min + theta_range / 7 * 2 * i
