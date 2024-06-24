@@ -86,7 +86,8 @@ class PathTracerMIS(RayTracer):
                 light_emission = sample_light_rec.material.emission(-wi_light, sample_light_rec)
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
-                direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
+                if direct_light_is_lights_pdf > 0:
+                    direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
                 lights_success = True
 
             # Sample the BRDF
@@ -156,7 +157,8 @@ class PathTracerLightsIS(RayTracer):
                 light_emission = sample_light_rec.material.emission(-wi_light, sample_light_rec)
                 fr = rec.material.bsdf(wi_light, wo, rec)
                 cosval = max(dot(wi_light, rec.normal), 0.0001)
-                direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
+                if direct_light_is_lights_pdf > 0:
+                    direct_light_is_lights = light_emission * fr * cosval / direct_light_is_lights_pdf
 
             direct_light = direct_light_is_lights
 
