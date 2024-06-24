@@ -8,18 +8,17 @@
 
 部分代码的实现有参考中国科学技术大学 2024 年春季课程《计算机图形学》的框架（[USTC-CG/USTC_CG_24: Homework repo for the course "Computer Graphics" in the 2024 spring @USTC (github.com)](https://github.com/USTC-CG/USTC_CG_24)）。
 
-本项目得到了中国科学技术大学 Vlab 实验平台的帮助与支持。本项目超过一半的代码在 Vlab 提供的在线虚拟机中编写，并在虚拟机中进行了大量的光追运算，得到了高品质的 baseline 图像。
+本项目得到了中国科学技术大学 Vlab 实验平台的帮助与支持。本项目超过一半的代码在 Vlab 提供的在线虚拟机中编写，并在虚拟机中进行了大量的光追运算，得到了高品质的参考图像。
 
-本项目绝大多数代码都是在 Ubuntu 22.04 系统下编写并测试，在 Windows 下并未经过充分测试。
+本项目绝大多数代码都是在 Ubuntu 22.04 系统下编写并测试，在 Windows 下也能保证稳定的运行。
 
-因为我目前经验不足，许多代码存在编写不规范的问题。作为独立编写的大作业项目，本项目的注释也并不充足。如果阅读代码遇到困难，还请抱歉。
+因为我目前经验不足，许多代码存在编写不规范的问题。作为独立编写的大作业项目，本项目的注释也并不充足。如果阅读代码遇到困难，可以向作者询问。
 
-必需依赖：
+依赖：
 
 - matplotlib：输出各种数学图像
+- numpy：对接图像的输入输出
 - pillow 7.2：读取 Cubemap 格式天空盒文件；便于输出 jpeg 格式的文件，防止输出 GIF 时大分辨率、大 spp 的格式造成的存储容量过大问题。
-
-可选依赖：
 
 - PyPy 3.8：加速 Python 脚本的运行
 - FFmpeg：用于将 ppm 格式的图像转换为其他格式，包括采样数增加过程的 gif 图。
@@ -31,12 +30,18 @@
 在 Linux 系统下，可以在项目根目录下通过 `run.sh` 自定义输出图像的行为。例如：
 
 ```bash
-./run.sh -o baseline -size 800*600 -spp 2048 -scene cornell_cubemap
+./run.sh -o ref -size 800*600 -spp 2048 -scene cornell_cubemap
+```
+
+你还可以用形如以下的命令进行自动测试：
+
+```bash
+./run.sh -o autotest -spp 256 -scene cornell_nospecular -test -ref ./data/cornell_nospecular_ref.txt
 ```
 
 在 Windows 系统下同理：
 ```bat
-./run.bat -o baseline -size 800*600 -spp 2048 -scene cornell_cubemap
+./run.bat -o ref -size 800*600 -spp 2048 -scene cornell_cubemap
 ```
 
 | 选项 | 作用 |
@@ -48,14 +53,19 @@
 | `-backup <number>`| 设置每多少张图像做一次备份 |
 | `-timelimit <time>`| 打开 Time Limit 模式并设置光追程序的运行时长 |
 | `-scene <scenename>`| 设置场景（目前已有场景在下表中） |
+| `-ref <file>`| 将 `file`（txt 文件） 作为测试参考的理想收敛情形 |
+| `-mis`| 用 MIS 算法进行渲染（默认值） |
+| `-lightsis`| 用光源重要性采样进行渲染 |
+| `-brdfis`| 用 BRDF 采样进行渲染 |
+| `-cosineis`| 用半球余弦采样进行渲染 |
 | `-gif`| 输出 gif 图像 |
-| `-pillow`| 用 pillow 直接输出 jpeg 格式的图像，而不是保存 ppm |
 | `-compress-output`| 使程序输出的内容更窄 |
 
 | 场景 | 描述 |
 |----|----------|
 | `cornell`| 渐变天空盒材质的 Cornell Box |
 | `cornell_cubemap`| Cube Map 天空盒材质的 Cornell Box |
+| `cornell_nospecular`| 不含镜面反射材质的 Cornell Box |
 | `mis`| 测试 MIS 所用的经典场景 |
 | `material`| 仅有 Cube Map 天空盒和一个小球，用于测试材质 |
 | `oneweekend`| Ray Tracing in one weekend 的场景（目前玻璃材质渲染有误） |
@@ -100,22 +110,22 @@
 
 ---
 
-以下是 5 月 10 日的版本生成的测试效果图像：
+以下是 6 月 23 日的版本生成的测试效果图像：
 
-![img](images/test2_energy_fig.jpg)
+![img](images/gt.png)
 
-No IS：
+Cosine IS：
 
-![img](images/nois.jpg)
+![img](images/test_CosineIS.png)
 
 BRDF IS：
 
-![img](images/brdfis.jpg)
+![img](images/test_BRDFIS.png)
 
 Lights IS：
 
-![img](images/lightsis.jpg)
+![img](images/test_LightsIS.png)
 
 MIS：
 
-![img](images/mis.jpg)
+![img](images/test_MIS.png)
