@@ -31,11 +31,6 @@ class LightList(SceneObjectGroup):
         N = len(self.obj_list)
         for light in self.obj_list:
             pdf += light.sample_light_pdf(wi, rec)
-        # hitrec = self.hit(ray(rec.pos, wi), 0.0001, math.inf)
-        # if not hitrec.success:
-        #     pdf = self.domelight.sample_light_pdf(wi, rec)
-        # else:
-        #     pdf = hitrec.obj.sample_light_pdf(wi, rec)
         pdf /= N
         return pdf
     def sample_light_emission(self, wi, rec_sample, rec_self=None):
@@ -131,7 +126,6 @@ class TriangleLight(Light):
             emission = self.irradiance / math.pi
         return emission
 
-# No Implement
 class SphereLight(Light):
     def __init__(self, origin:vec3, radius:float, radiance:vec3, use_irradiance=False):
         self.origin = origin

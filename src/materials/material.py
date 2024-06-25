@@ -66,6 +66,7 @@ class SimpleMetal(Material):
         pdf = random_ggx_pdf(a2, LdotV)
         return pdf
 
+# TODO: bugfix
 class SimpleTransparent(Material):
     ref_idx = 1.5
     def __init__(self, ref_idx:float):
@@ -102,7 +103,6 @@ class SimpleTransparent(Material):
             return fr * (1 - reflect_prob)
         return vec3.zero()
 
-# Temporal "Light material"
 class SimpleDirectionalLight(Material):
     irradiance = vec3(1.0)
     normal = vec3(0.0)
